@@ -1,0 +1,32 @@
+
+Subclass class=\"NR_sample"\ superclass=\"Structure"\ comment=\sample paramter defintion class\&
+			names=\"title subtitile translation height phi_offset footprint resolution s3 s4 knauer"\
+
+PROCEDURE runscript 
+GLOBAL runTime
+
+CHANGE NPERIODS=1
+
+
+#====================================
+#These are our samples:
+#====================================
+
+
+#====================================
+#====================================
+#Script body begins here:
+#====================================
+runTime=0
+
+
+printn runTime "minutes"
+#====================================
+#Script body ends here
+#====================================
+
+ENDPROCEDURE
+
+
+runscript
+
