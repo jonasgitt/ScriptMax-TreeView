@@ -348,9 +348,7 @@ void MainWindow::defineSamples(){
 QString makeLine(QString action, QStringList args){
 
 }
-//Added a new comment
-//Added another comment
-//Added a third Comment
+
 //TOREAD  + cases in einzelne functions?
 void MainWindow::parseTable(){
 
