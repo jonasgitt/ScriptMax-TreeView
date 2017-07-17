@@ -38,10 +38,13 @@ public:
     double flow, volume;
     int knauer;
 
+    double JTemp, JMin, JMax;
+
 };
 
 QString writeRun(runstruct runvars, bool runSM);
 QString writeContrast(runstruct runvars, bool wait);
+QString writeJulabo(runstruct runvars, int runCont);
 
 #endif // RUNOPTIONS_H
 

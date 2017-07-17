@@ -13,14 +13,12 @@
 
 QString writeRun(runstruct runvars, bool runSM){
 
-    QString scriptLine;
-
+    QString scriptLine, ang, amp;
     scriptLine = "# " + runvars.sampName + ":\n";
     scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
 
     if (runSM){
         for (int i = 0; i < 3; i++){
-            QString ang, amp;
             ang = QString::number(runvars.angles[i]);
             amp = QString::number(runvars.uAmps[i]);
             scriptLine += "runTime = runAngle_SM(s" + runvars.sampNum + "," + ang + "," + amp + ")" + "\n";
@@ -28,13 +26,11 @@ QString writeRun(runstruct runvars, bool runSM){
     }
     else {
         for (int i = 0; i < 3; i++){
-            QString ang, amp;
             ang = QString::number(runvars.angles[i]);
             amp = QString::number(runvars.uAmps[i]);
             scriptLine += "runTime = runAngle(s" + runvars.sampNum + "," + ang + "," + amp + ")" + "\n";
         }
     }
-
     return scriptLine;
 }
 
@@ -58,6 +54,21 @@ QString writeContrast(runstruct runvars, bool wait){
     scriptLine += ", " + QString::number(runvars.volume) + ")";
 
     return scriptLine;
+
+}
+
+QString writeJulabo(runstruct runvars, int runcont){
+    QString scriptLine;
+
+     if(runcont){
+         scriptLine = "CSET /control Julabo_WB=" + QString::number(runvars.JTemp);
+         scriptLine += " lowlimit=" + QString::number(runvars.JMin);
+         scriptLine += " highlimit=" + QString::number(runvars.JMax);
+     }
+
+     else scriptLine = "CSET /nocontrol Julabo_WB=" + QString::number(runvars.JTemp);
+
+     return scriptLine;
 
 }
 /*

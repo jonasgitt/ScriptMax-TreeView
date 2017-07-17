@@ -521,7 +521,6 @@ void MainWindow::contrastChange(int row){
 
         angle1 = runvars.volume/runvars.flow; //pump time in minutes
         secs = static_cast<int>(angle1*60); //for TS2 current
-        //runTime = runTime.addSecs(secs);
         ui->timeEdit->setTime(runTime.addSecs(secs));//whichSamp->currentIndex()+1)
 
         wait = true;
@@ -537,49 +536,45 @@ void MainWindow::contrastChange(int row){
 
 void MainWindow::setTemp(int row){
 
-    QString scriptLine;
+    QString scriptLine = "";
     bool ok;
     QComboBox* whichTemp = new QComboBox;
     QComboBox* runControl = new QComboBox;
+    runstruct runvars;
+
+    ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
 
     whichTemp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
     switch (whichTemp->currentIndex())
     {
-        case 0: //Julabo control
+        case 0:{ //Julabo control
             ok=true;
             runControl = (QComboBox*)ui->tableWidget_1->cellWidget(row, 3);
-            // Waterbath limits?!!!!!!!!!!!!!!!!!!!!!!!!
-            if(ui->tableWidget_1->item(row,2)->text().toDouble(&ok)> -5.0 \
-                    && ui->tableWidget_1->item(row,2)->text().toDouble(&ok)<95.0 \
-                    && ok)
-            {
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-                switch(runControl->currentIndex())
-                {
-                    case 0: // no runcontrol
-                        scriptLine = "CSET /nocontrol Julabo_WB=" + ui->tableWidget_1->item(row,2)->text();
-                        ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-                        break;
-                    case 1: // activate runcontrol
-                        if(ui->tableWidget_1->item(row,4)->text().toDouble(&ok) < ui->tableWidget_1->item(row,2)->text().toDouble()\
-                                && ui->tableWidget_1->item(row,5)->text().toDouble(&ok) > ui->tableWidget_1->item(row,2)->text().toDouble()\
-                                && ok)
-                        {
-                            ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-                            scriptLine = "CSET /control Julabo_WB=" + ui->tableWidget_1->item(row,2)->text()\
-                                    + " lowlimit=" + ui->tableWidget_1->item(row,4)->text()\
-                                    + " highlimit=" + ui->tableWidget_1->item(row,5)->text();
-                            ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-                        } else {
-                            ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-                        }
-                        break;
+            //int runCont = 1;//TEMP
+            runvars.JTemp = ui->tableWidget_1->item(row,2)->text().toDouble(&ok);
+
+            int runCont;
+            if (runvars.JTemp > -5.0 && runvars.JTemp < 95.0 && ok)
+                    runCont = runControl->currentIndex();
+
+            if (runCont && ok){
+                runvars.JMin = ui->tableWidget_1->item(row,4)->text().toDouble(&ok);
+                runvars.JMax = ui->tableWidget_1->item(row,5)->text().toDouble(&ok);
+
+                if (runCont && runvars.JMax > runvars.JTemp && runvars.JMin < runvars.JTemp){
+                    scriptLine = writeJulabo(runvars, runCont);
+                    ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
                 }
-            } else {
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
+             }
+
+            else if (!runCont && ok) {
+                scriptLine = writeJulabo(runvars, runCont);
+                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
             }
-            break;
-        case 1: // Eurotherms control
+            ui->plainTextEdit->insertPlainText(scriptLine);
+
+            break;}
+    case 1:{ // Eurotherms control
             ok = true;
             scriptLine = "CSET";
             ui->plainTextEdit->insertPlainText(scriptLine);
@@ -588,9 +583,9 @@ void MainWindow::setTemp(int row){
                 ui->plainTextEdit->insertPlainText(scriptLine);
             }
             ui->plainTextEdit->insertPlainText("\n");
-            break;
-        case 2: // Peltier control
-            break;
+            break;}
+    case 2:{ // Peltier control
+            break;}
     }
 }
 
