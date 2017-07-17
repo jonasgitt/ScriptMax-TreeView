@@ -18,7 +18,6 @@ QString writeRun(runstruct runvars, bool runSM){
     scriptLine = "# " + runvars.sampName + ":\n";
     scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
 
-    //MUST CONVERT ANGLES, UAMPS to STRINGS. MAKE COMMIT AFTER THIS WORKS
     if (runSM){
         for (int i = 0; i < 3; i++){
             QString ang, amp;
@@ -27,7 +26,7 @@ QString writeRun(runstruct runvars, bool runSM){
             scriptLine += "runTime = runAngle_SM(s" + runvars.sampNum + "," + ang + "," + amp + ")" + "\n";
         }
     }
-    else{
+    else {
         for (int i = 0; i < 3; i++){
             QString ang, amp;
             ang = QString::number(runvars.angles[i]);
@@ -37,6 +36,29 @@ QString writeRun(runstruct runvars, bool runSM){
     }
 
     return scriptLine;
+}
+
+QString writeContrast(runstruct runvars, bool wait){
+
+    QString scriptLine;
+
+    if (wait)
+        scriptLine = "runTime = contrastChange:wait(";
+    else
+        scriptLine = "runTime = contrastChange(";
+
+    scriptLine += QString::number(runvars.knauer) + ", ";
+
+    for (int i = 0; i < 4; i++){
+        scriptLine += QString::number(runvars.concs[i]);
+        scriptLine += ", ";
+    }
+
+    scriptLine += QString::number(runvars.flow);
+    scriptLine += ", " + QString::number(runvars.volume) + ")";
+
+    return scriptLine;
+
 }
 /*
 void SMRun(int row){

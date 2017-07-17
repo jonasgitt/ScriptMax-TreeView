@@ -34,11 +34,14 @@ public:
     QString sampNum;
     QString sampName;
 
-
+    double concs[3];
+    double flow, volume;
+    int knauer;
 
 };
 
 QString writeRun(runstruct runvars, bool runSM);
+QString writeContrast(runstruct runvars, bool wait);
 
 #endif // RUNOPTIONS_H
 

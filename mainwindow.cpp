@@ -462,30 +462,7 @@ void MainWindow::normalRun(int row, bool runSM){
     ui->plainTextEdit->insertPlainText(scriptText);
 
 }
-/*
-//only difference to normal run is runAngle_SM in script
-void MainWindow::SMRun(int row){
 
-    //QComboBox* whichSamp = new QComboBox;
-    //QString scriptLine;
-
-   // whichSamp=(QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-   // mySampleForm->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
-    //scriptLine = "s" + QString::number(whichSamp->currentIndex()+1) + ".subtitle = \"" + ui->tableWidget_1->item(row,2)->text() + "\"";
-    //ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-    for(int angle=0; angle<3; angle++){
-        if (!(ui->tableWidget_1->item(row,2*angle+3)->text().contains("Angle")) \
-                && !(ui->tableWidget_1->item(row,2*angle+4)->text().contains("uAmps")))
-        {
-            scriptLine = "runTime = runAngle_SM(s" + QString::number(whichSamp->currentIndex()+1) \
-                + "," + ui->tableWidget_1->item(row,2*angle+3)->text() + "," \
-                + ui->tableWidget_1->item(row,2*angle+4)->text() + ")";
-            ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-        }
-    }
-
-}
-*/
 void MainWindow::kineticRun(int row){
 
     QComboBox* whichSamp = new QComboBox;
@@ -508,59 +485,54 @@ void MainWindow::contrastChange(int row){
     int percentSum = 0;
     int secs;
     double angle1;
-    bool ok;
+    bool ok, wait;
     QString scriptLine;
     QComboBox* whichSamp = new QComboBox;
     QComboBox* continueRun = new QComboBox;
+
+    runstruct runvars;
 
     whichSamp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
     continueRun = (QComboBox*)ui->tableWidget_1->cellWidget(row, 8);
 
     // check if A-D are integers and sum to 100:
-    for (int col=2; col < 6; col++){
-        if ((ui->tableWidget_1->item(row,col)->text()).toInt(&ok) > 0 \
-                && !(ui->tableWidget_1->item(row,col)->text().contains("."))\
-                || (ui->tableWidget_1->item(row,col)->text() == "0")){
-            percentSum += (ui->tableWidget_1->item(row,col)->text()).toInt(&ok);
+    for (int i=0; i < 4; i++){
+        runvars.concs[i] = (ui->tableWidget_1->item(row,i+2)->text()).toInt(&ok);
+
+        if (runvars.concs[i] >= 0){
+            percentSum += runvars.concs[i];
         } else {
             percentSum = 0;
             break;
         }
     }
-    // set flag:
-    if (percentSum != 100 || (ui->tableWidget_1->item(row,6)->text()).toDouble() <= 0.0\
-            || (ui->tableWidget_1->item(row,7)->text()).toDouble() <= 0.0){
+
+    runvars.flow = (ui->tableWidget_1->item(row,6)->text()).toDouble();
+    runvars.volume = (ui->tableWidget_1->item(row,7)->text()).toDouble();
+    runvars.knauer = mySampleForm->sampleList[whichSamp->currentIndex()].knauer;
+
+    if (percentSum != 100 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
         ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
         return;
-        }
+       }
+    else ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
 
-    ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
     if (continueRun->currentIndex()){
-        // increase run time and update display
-        angle1 = ui->tableWidget_1->item(row,7)->text().toDouble()/ui->tableWidget_1->item(row,6)->text().toDouble(); //pump time in minutes
+
+        angle1 = runvars.volume/runvars.flow; //pump time in minutes
         secs = static_cast<int>(angle1*60); //for TS2 current
-        runTime = runTime.addSecs(secs);
-        ui->timeEdit->setTime(runTime);//whichSamp->currentIndex()+1)
-        scriptLine = "runTime = contrastChange:wait(" + QString::number(mySampleForm->sampleList[whichSamp->currentIndex()].knauer) \
-            + "," + ui->tableWidget_1->item(row,2)->text() \
-            + "," + ui->tableWidget_1->item(row,3)->text() \
-            + "," + ui->tableWidget_1->item(row,4)->text() \
-            + "," + ui->tableWidget_1->item(row,5)->text() \
-            + "," + ui->tableWidget_1->item(row,6)->text() \
-            + "," + ui->tableWidget_1->item(row,7)->text() \
-                + ")";
-    }else{
-        scriptLine = "runTime = contrastChange(" + QString::number(mySampleForm->sampleList[whichSamp->currentIndex()].knauer) \
-            + "," + ui->tableWidget_1->item(row,2)->text() \
-            + "," + ui->tableWidget_1->item(row,3)->text() \
-            + "," + ui->tableWidget_1->item(row,4)->text() \
-            + "," + ui->tableWidget_1->item(row,5)->text() \
-            + "," + ui->tableWidget_1->item(row,6)->text() \
-            + "," + ui->tableWidget_1->item(row,7)->text() \
-                + ")";
+        //runTime = runTime.addSecs(secs);
+        ui->timeEdit->setTime(runTime.addSecs(secs));//whichSamp->currentIndex()+1)
+
+        wait = true;
+        scriptLine = writeContrast(runvars, wait);
+
+    }else {
+        wait = false;
+        scriptLine = writeContrast(runvars, wait);
     }
 
-    ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
+    ui->plainTextEdit->insertPlainText(scriptLine + "\n");
 }
 
 void MainWindow::setTemp(int row){
