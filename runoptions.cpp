@@ -11,64 +11,34 @@
 #include <QApplication>
 
 
-/*
-void normalRun(int row, SampleForm *mySampleForm){
+QString writeRun(runstruct runvars, bool runSM){
 
-    double angle1, angle2;
-    int secs;
-    bool ok;
-    QComboBox* whichSamp = new QComboBox;
     QString scriptLine;
-    QMainWindow *ui = Ui::MainWindow;
-    if(mySampleForm->sampleList.length()){
-            whichSamp=(QComboBox*)ui ->tableWidget_1->cellWidget(row, 1);
-            scriptLine = "# " + mySampleForm->sampleList[whichSamp->currentIndex()].title;
-            ui->plainTextEdit->insertPlainText(scriptLine+ ":\n");
-            mySampleForm->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
 
-            scriptLine = "s" + QString::number(whichSamp->currentIndex()+1) + ".subtitle = \"" \
-                    + ui->tableWidget_1->item(row,2)->text() + "\"";
-            ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
+    scriptLine = "# " + runvars.sampName + ":\n";
+    scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
 
-            for(int angle=0; angle<3; angle++){
-                ok = false;
-                angle1 = (ui->tableWidget_1->item(row,2*angle+3)->text()).toDouble(&ok);
-                angle2 = (ui->tableWidget_1->item(row,2*angle+4)->text()).toDouble(&ok);
-
-                if (angle1 > 0.0 && angle2 > 0.0) // apply filter on 'reasonable' angles and run times
-                {
-                    // increase run time and update display
-                    if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
-                        secs = static_cast<int>(angle2/160*3600); // TS2
-                    } else {
-                        secs = static_cast<int>(angle2/40*3600); // TS2
-                    }
-                    runTime = runTime.addSecs(secs);
-                    ui->timeEdit->setTime(runTime);
-                    ok = true;
-                    scriptLine = "runTime = runAngle(s" + QString::number(whichSamp->currentIndex()+1) \
-                        + "," + ui->tableWidget_1->item(row,2*angle+3)->text() + "," \
-                        + ui->tableWidget_1->item(row,2*angle+4)->text() + ")";
-                    ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-                } else {
-
-                    if ((ui->tableWidget_1->item(row,2*angle+3)->text().contains("Angle")\
-                            && ui->tableWidget_1->item(row,2*angle+4)->text().contains("uAmps"))\
-                        || ((ui->tableWidget_1->item(row,2*angle+3)->text() == ""\
-                                && ui->tableWidget_1->item(row,2*angle+4)->text() == "")))
-                    {
-                        ok = true;
-                    } else {ok = false; break;}
-                }
-            };
-            if (ok){
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-            } else {
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-            }
+    //MUST CONVERT ANGLES, UAMPS to STRINGS. MAKE COMMIT AFTER THIS WORKS
+    if (runSM){
+        for (int i = 0; i < 3; i++){
+            QString ang, amp;
+            ang = QString::number(runvars.angles[i]);
+            amp = QString::number(runvars.uAmps[i]);
+            scriptLine += "runTime = runAngle_SM(s" + runvars.sampNum + "," + ang + "," + amp + ")" + "\n";
         }
-}
+    }
+    else{
+        for (int i = 0; i < 3; i++){
+            QString ang, amp;
+            ang = QString::number(runvars.angles[i]);
+            amp = QString::number(runvars.uAmps[i]);
+            scriptLine += "runTime = runAngle(s" + runvars.sampNum + "," + ang + "," + amp + ")" + "\n";
+        }
+    }
 
+    return scriptLine;
+}
+/*
 void SMRun(int row){
 
     QComboBox* whichSamp = new QComboBox;

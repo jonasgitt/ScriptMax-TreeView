@@ -38,14 +38,14 @@ public:
 
     void defineSamples();
     //outsourced cases
-    void normalRun(int row);
-    void SMRun(int row);
+    void normalRun(int row, bool runSM);
     void kineticRun(int row);
     void OGcommand(int row);
     void contrastChange(int row);
     void setTemp(int row);
     void setNIMA(int row);
     void runTrans(int row);
+
 
 public slots:
     void parseTableSlot();
@@ -55,6 +55,8 @@ public slots:
     void on_actionCut_triggered();
     void ShowContextMenu(const QPoint& pos);
     QStringList searchDashboard(QString path);
+
+
 
 private slots:
     void initMainTable();

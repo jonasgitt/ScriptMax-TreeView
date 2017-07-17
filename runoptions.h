@@ -1,6 +1,6 @@
 #ifndef RUNOPTIONS_H
 #define RUNOPTIONS_H
-/*
+
 #include "sampleform.h"
 #include "sampletable.h"
 #include "ui_sampletable.h"
@@ -10,7 +10,7 @@
 #include <QComboBox>
 #include <QSignalMapper>
 #include <QTime>
-
+/*
 
 
     //outsourced cases
@@ -23,6 +23,22 @@
     void setNIMA(int row);
     void runTrans(int row);
 */
+
+class runstruct{
+
+public:
+    double angles[3];
+    //double ang1, ang2, ang3;
+    double uAmps[3];
+    QString subtitle;
+    QString sampNum;
+    QString sampName;
+
+
+
+};
+
+QString writeRun(runstruct runvars, bool runSM);
 
 #endif // RUNOPTIONS_H
 
