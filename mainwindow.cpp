@@ -239,34 +239,7 @@ void MainWindow::runGenie(){
 
 }
 
-//saves the script file 
-void MainWindow::save(){
 
-    //lineEdit is the Save As box,
-    QString fileName = ui->lineEdit->text();
-
-
-    if (fileName != "") {
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly)) {
-            // error message
-        } else {
-            QTextStream stream(&file);
-            stream << ui->plainTextEdit->toPlainText(); //gets the text out of the script box. note repitition below
-            stream.flush();
-            file.close();
-        }
-    } else {
-        //creates a SaveFileName if the lineEdit box was empty
-        fileName = QFileDialog::getSaveFileName(this,tr("Save gcl file"), \
-                                                   "C://Users//ktd4279//Documents//", tr("GCL files (*.gcl)"));
-        QFile file(fileName);
-        QTextStream stream(&file);
-        stream << ui->plainTextEdit->toPlainText();
-        stream.flush();
-        file.close();
-    }
-}
 
 //this is identical to parseTable(), which extracts the data from the table
 void MainWindow::parseTableSlot(){
@@ -287,6 +260,7 @@ void MainWindow::writeBackbone(){
     QString OGtext = in.readAll();
     ui->plainTextEdit->setPlainText(OGtext);
 
+    OGfile.close();
 
     //SAMPLE NAMING DOESN'T MATCH USER INPUT
     ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
@@ -1257,6 +1231,34 @@ void MainWindow::on_checkBox_2_clicked(bool checked)
     }
 }
 
+//used only once, at the end of Parsetable
+void MainWindow::save(){
+
+    //lineEdit is the Save As box,
+    QString fileName = ui->lineEdit->text();
+
+
+    if (fileName != "") {
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly)) {
+            QMessageBox::warning(this, "title","couldn't open OGfile");
+        } else {
+            QTextStream stream(&file);
+            stream << ui->plainTextEdit->toPlainText(); //gets the text out of the script box. note repitition below
+            stream.flush();
+            file.close();
+        }
+    } else {
+        //creates a SaveFileName if the lineEdit box was empty
+        fileName = QFileDialog::getSaveFileName(this,tr("Save gcl file"), \
+                                                   "C://Users//ktd4279//Documents//", tr("GCL files (*.gcl)"));
+        QFile file(fileName);
+        QTextStream stream(&file);
+        stream << ui->plainTextEdit->toPlainText();
+        stream.flush();
+        file.close();
+    }
+}
 //write sample info into a file. what about rest of script??
 void MainWindow::on_actionSave_Script_triggered()
 {
@@ -1501,7 +1503,27 @@ void MainWindow::on_actionAbout_ScriptMax_triggered()
 //Clears Table
 void MainWindow::on_clearTableButton_clicked()
 {
-    initMainTable();
+    bool sure;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Warning");
+    msgBox.setInformativeText("Are you sure you want to clear the table? All entries will be lost."\
+    "to clear the script, go to File>New Script");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    int ret = msgBox.exec();
+    switch (ret) {
+       case QMessageBox::Yes:
+           sure = true;
+           break;
+       case QMessageBox::Cancel:
+           sure = false;
+           break;
+       default:
+           // should never be reached
+           break;
+     }
+    if (sure) initMainTable();
 }
 
 //Customise Commands Field
