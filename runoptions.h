@@ -28,7 +28,6 @@ class runstruct{
 
 public:
     double angles[3];
-    //double ang1, ang2, ang3;
     double uAmps[3];
     QString subtitle;
     QString sampNum;
@@ -44,13 +43,16 @@ public:
 
     double euroTemps[9];
 
+    double heightOffsT, uAmpsT;
+
 };
 
-QString writeRun(runstruct runvars, bool runSM);
+QString writeRun(runstruct &runvars, bool runSM);
 QString writeContrast(runstruct runvars, bool wait);
 QString writeJulabo(runstruct runvars, int runCont);
 QString writeEuro(runstruct runvars);
 QString writeNIMA(runstruct runvars, bool PorA);
+QString writeTransm(runstruct runvars);
 
 #endif // RUNOPTIONS_H
 

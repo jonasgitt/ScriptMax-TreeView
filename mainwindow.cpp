@@ -411,7 +411,6 @@ void MainWindow::parseTable(){
 
 void MainWindow::normalRun(int row, bool runSM){
 
-    int secs;
     bool ok;
     QComboBox* whichSamp = new QComboBox;
     runstruct runvars;
@@ -446,8 +445,6 @@ void MainWindow::normalRun(int row, bool runSM){
 
             if (ok){
                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-                //runTime = runTime.addSecs(secs);
-                //ui->timeEdit->setTime(runTime);
             } else {
                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
             }
@@ -619,42 +616,35 @@ void MainWindow::setNIMA(int row){
 
 void MainWindow::runTrans(int row){
 
-    int secs;
-    double angle1, angle2;
+    double angle2;
     bool ok;
-    QString scriptLine;
     QComboBox* whichSamp = new QComboBox;
+    runstruct runvars;
 
     if(mySampleForm->sampleList.length()){
         whichSamp=(QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-        scriptLine = "# " + mySampleForm->sampleList[whichSamp->currentIndex()].title;
-        ui->plainTextEdit->insertPlainText(scriptLine+ ":\n");
+        runvars.sampName = mySampleForm->sampleList[whichSamp->currentIndex()].title;
+
         mySampleForm->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
+        runvars.subtitle = ui->tableWidget_1->item(row,2)->text();
 
-        scriptLine = "s" + QString::number(whichSamp->currentIndex()+1) + ".subtitle = \"" \
-                + ui->tableWidget_1->item(row,2)->text() + "\"";
-        ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-        ok = false;
+        runvars.sampNum = QString::number(whichSamp->currentIndex()+1);
+        runvars.heightOffsT = (ui->tableWidget_1->item(row,3)->text()).toDouble(&ok);
+
+        for (int i = 0; i < 3; i++){
+            runvars.angles[i] = (ui->tableWidget_1->item(row,i+4)->text()).toDouble(&ok);
+        }
+        runvars.uAmpsT = (ui->tableWidget_1->item(row,7)->text()).toDouble(&ok);
         angle2 = (ui->tableWidget_1->item(row,8)->text()).toDouble(&ok);
-
-        updateRunTime(angle2);
-
-        ok=true;
-        scriptLine = "runTime = runTrans(s" + QString::number(whichSamp->currentIndex()+1) \
-                    + "," + ui->tableWidget_1->item(row,3)->text() + "," \
-                    + ui->tableWidget_1->item(row,4)->text() + "," \
-                    + ui->tableWidget_1->item(row,5)->text() + "," \
-                    + ui->tableWidget_1->item(row,6)->text() + "," \
-                    + ui->tableWidget_1->item(row,7)->text() + ")";
-
-                ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
 
         if (ok){
             ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-        } else {
-            ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-        }
+            updateRunTime(angle2);
+            ui->plainTextEdit->insertPlainText(writeTransm(runvars) + "\n");
+        } else ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
+
     }
+
     return;
 }
 
