@@ -71,6 +71,28 @@ QString writeJulabo(runstruct runvars, int runcont){
      return scriptLine;
 
 }
+
+QString writeEuro(runstruct runvars){
+    QString scriptLine;
+    scriptLine = "CSET";
+
+    for(int i=0; i<9; i++){
+        scriptLine += " temp" + QString::number(i) + "=" + QString::number(runvars.euroTemps[i]);
+    }
+    return scriptLine;
+}
+
+QString writeNIMA(runstruct runvars, bool PorA){
+
+    QString scriptLine;
+
+    if (!PorA)
+        scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure);
+    else
+        scriptLine = "CSET target_area = " + QString::number(runvars.area);
+
+    return scriptLine;
+}
 /*
 void SMRun(int row){
 

@@ -46,6 +46,8 @@ public:
     void setNIMA(int row);
     void runTrans(int row);
 
+    void updateRunTime(double angle);
+
 
 public slots:
     void parseTableSlot();

@@ -40,11 +40,17 @@ public:
 
     double JTemp, JMin, JMax;
 
+    double area, pressure;
+
+    double euroTemps[9];
+
 };
 
 QString writeRun(runstruct runvars, bool runSM);
 QString writeContrast(runstruct runvars, bool wait);
 QString writeJulabo(runstruct runvars, int runCont);
+QString writeEuro(runstruct runvars);
+QString writeNIMA(runstruct runvars, bool PorA);
 
 #endif // RUNOPTIONS_H
 

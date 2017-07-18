@@ -434,12 +434,7 @@ void MainWindow::normalRun(int row, bool runSM){
                 if (runvars.angles[cell] > 0.0 && runvars.uAmps[cell] > 0.0) // apply filter on 'reasonable' angles and run times
                 {
                     ok = true;
-
-                    // increase run time and update display
-                    if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF")
-                        secs = static_cast<int>(runvars.uAmps[cell]/160*3600); // TS2
-                    else secs = static_cast<int>(runvars.uAmps[cell]/40*3600); // TS2
-
+                    updateRunTime(runvars.uAmps[cell]);
                 } else if  (!(ui->tableWidget_1->item(row,2*cell+3)->text().contains("Angle")\
                             && ui->tableWidget_1->item(row,2*cell+4)->text().contains("uAmps"))\
                         || !(ui->tableWidget_1->item(row,2*cell+3)->text() == ""\
@@ -451,8 +446,8 @@ void MainWindow::normalRun(int row, bool runSM){
 
             if (ok){
                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-                runTime = runTime.addSecs(secs);
-                ui->timeEdit->setTime(runTime);
+                //runTime = runTime.addSecs(secs);
+                //ui->timeEdit->setTime(runTime);
             } else {
                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
             }
@@ -460,7 +455,7 @@ void MainWindow::normalRun(int row, bool runSM){
 
     QString scriptText = writeRun(runvars, runSM);
     ui->plainTextEdit->insertPlainText(scriptText);
-
+    return;
 }
 
 void MainWindow::kineticRun(int row){
@@ -473,6 +468,7 @@ void MainWindow::kineticRun(int row){
             + "," + ui->tableWidget_1->item(row,3)->text() + "," \
             + ui->tableWidget_1->item(row,4)->text() + ")";
     ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
+    return;
 }
 
 void MainWindow::OGcommand(int row){
@@ -530,8 +526,8 @@ void MainWindow::contrastChange(int row){
         wait = false;
         scriptLine = writeContrast(runvars, wait);
     }
-
     ui->plainTextEdit->insertPlainText(scriptLine + "\n");
+    return;
 }
 
 void MainWindow::setTemp(int row){
@@ -569,38 +565,56 @@ void MainWindow::setTemp(int row){
 
             else if (!runCont && ok) {
                 scriptLine = writeJulabo(runvars, runCont);
-                 ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
+                ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
             }
-            ui->plainTextEdit->insertPlainText(scriptLine);
 
             break;}
     case 1:{ // Eurotherms control
             ok = true;
-            scriptLine = "CSET";
-            ui->plainTextEdit->insertPlainText(scriptLine);
-            for(int i=0;i<9;i++){
-                scriptLine = " temp" + QString::number(i) + "=" + ui->tableWidget_1->item(row,i+2)->text();
-                ui->plainTextEdit->insertPlainText(scriptLine);
+            int i = 0;
+
+            while(i < 9 && ok){
+                runvars.euroTemps[i] = (ui->tableWidget_1->item(row,i+2)->text()).toDouble(&ok);
+                i++;
             }
-            ui->plainTextEdit->insertPlainText("\n");
+            if (ok) ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
+            scriptLine = writeEuro(runvars);
+
             break;}
     case 2:{ // Peltier control
             break;}
     }
+
+    ui->plainTextEdit->insertPlainText(scriptLine + "\n");
+    return;
 }
 
 void MainWindow::setNIMA(int row){
 
       QString scriptLine;
       QComboBox* box1 = new QComboBox;
+      bool PorA, ok;
+      runstruct runvars;
 
       box1 = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-      //QComboBox* box1 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-      if(box1->currentText().contains("Pressure"))
-          scriptLine = "CSET target_pressure = " + ui->tableWidget_1->item(row,2)->text();
+      ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
+
+      if(box1->currentText().contains("Pressure")){
+          PorA = false;
+          runvars.pressure = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
+       }
+
       else if (box1->currentText().contains("Area"))
-          scriptLine = "CSET target_area = " + ui->tableWidget_1->item(row,2)->text();
+          PorA = true;
+          runvars.area = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
+
+      if (ok) {
+          scriptLine = writeNIMA(runvars, PorA);
+          ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
+      }
+
       ui->plainTextEdit->insertPlainText(scriptLine + "\n");
+      return;
 }
 
 void MainWindow::runTrans(int row){
@@ -623,14 +637,8 @@ void MainWindow::runTrans(int row){
         ok = false;
         angle2 = (ui->tableWidget_1->item(row,8)->text()).toDouble(&ok);
 
-        // increase run time and update display
-        if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
-            secs = static_cast<int>(angle2/160*3600); // TS2
-        } else {
-            secs = static_cast<int>(angle2/40*3600); // TS2
-        }
-        runTime = runTime.addSecs(secs);
-        ui->timeEdit->setTime(runTime);
+        updateRunTime(angle2);
+
         ok=true;
         scriptLine = "runTime = runTrans(s" + QString::number(whichSamp->currentIndex()+1) \
                     + "," + ui->tableWidget_1->item(row,3)->text() + "," \
@@ -647,8 +655,20 @@ void MainWindow::runTrans(int row){
             ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
         }
     }
+    return;
 }
 
+void MainWindow::updateRunTime(double angle){
+    int secs;
+    if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
+        secs = static_cast<int>(angle/160*3600); // TS2
+    } else {
+        secs = static_cast<int>(angle/40*3600); // TS2
+    }
+    runTime = runTime.addSecs(secs);
+    ui->timeEdit->setTime(runTime);
+    return;
+}
 
 //why is it only displaying one specific sample and not the whole table?
 void MainWindow::openSampleForm()
