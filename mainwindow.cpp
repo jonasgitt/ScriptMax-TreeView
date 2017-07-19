@@ -1314,20 +1314,36 @@ void MainWindow::on_actionSave_Script_triggered()
         }
         file.close();
     }
-    //if filename = "" i.e empty, go to on_actionSave_script_triggered() find the file name and come back to this function
-    else {
-        on_actionSave_Script_As_triggered();
+    else{
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("You haven't specified a filename or directory.");
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        int ret = msgBox.exec();
+
+        switch (ret) {
+          case QMessageBox::Save:
+              // Save was clicked
+              on_actionSave_Script_As_triggered();
+              initMainTable();
+              break;
+          case QMessageBox::Cancel:
+              // Cancel was clicked
+              break;
+          default:
+              // should never be reached
+              break;
+        }
     }
 }
 
 //??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
 void MainWindow::on_actionSave_Script_As_triggered()
 {
-    //getsavefilename is a function out of Qfile library
-    //opens file dialog and asks for filename in the directory
-    //make directory the one where the last file was saved
-    fileName = QFileDialog::getSaveFileName(this,tr("Open Script"), \
-                                           "C://Users//ktd4279//Documents//", tr("Script files (*.scp)")); //tr is used to enable translation bw languages
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
+                                           defaultLocation, tr("Script files (*.scp)")); //tr is used to enable translation bw languages
     on_actionSave_Script_triggered();
 }
 
@@ -1340,8 +1356,9 @@ void MainWindow::on_actionOpen_Script_triggered()
     QStringList rowEntries;
     QString line[150];
 
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     fileName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
-                                           "C://Users//ktd4279//Documents//", tr("Script files (*.scp)"));
+                                           defaultLocation, tr("Script files (*.scp)"));
     if (fileName!=""){
         QFile file(fileName);
         file.open(QIODevice::ReadOnly);
@@ -1362,7 +1379,7 @@ void MainWindow::on_actionOpen_Script_triggered()
             sampleParameters = line[l].split(','); //sampleParameters stores the parameters that are listed at the start of line Qstring
             if (sampleParameters.length() == 9){   //these parameters are then passed to a NRSample struct
                 mySampleForm->currentSample = l-1;
-                NRSample newSample;                     //NRSample is a struct declared in sampleform.h
+                NRSample newSample;
                 newSample.title = sampleParameters[0];
                 newSample.translation = sampleParameters[1].toDouble();
                 newSample.height = sampleParameters[2].toDouble();
