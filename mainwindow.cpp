@@ -16,6 +16,8 @@
 #include "runoptions.h"
 #include <QFile>
 #include <QTextStream>
+#include <QLineEdit>
+#include <QStandardPaths>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1192,9 +1194,15 @@ QStringList MainWindow::searchDashboard(QString instrument){
 //Tells the widget if it has been enabled or not in response to status of checkbox
 void MainWindow::on_checkBox_clicked(bool checked)
 {
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QDateTime local(QDateTime::currentDateTime());
+    QString defaultfileName = defaultLocation + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
+
+
     if (checked){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
+        ui->lineEdit->setPlaceholderText(defaultfileName);
     } else {
         ui->lineEdit->setEnabled(false);
         ui->toolButton->setEnabled(false);
@@ -1232,34 +1240,25 @@ void MainWindow::on_checkBox_2_clicked(bool checked)
 }
 
 //used only once, at the end of Parsetable
+//is printed all onto one line :/
 void MainWindow::save(){
 
     //lineEdit is the Save As box,
     QString fileName = ui->lineEdit->text();
 
-
-    if (fileName != "") {
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly)) {
-            QMessageBox::warning(this, "title","couldn't open OGfile");
-        } else {
-            QTextStream stream(&file);
-            stream << ui->plainTextEdit->toPlainText(); //gets the text out of the script box. note repitition below
-            stream.flush();
-            file.close();
-        }
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Error","Could not save scriptfile.");
     } else {
-        //creates a SaveFileName if the lineEdit box was empty
-        fileName = QFileDialog::getSaveFileName(this,tr("Save gcl file"), \
-                                                   "C://Users//ktd4279//Documents//", tr("GCL files (*.gcl)"));
-        QFile file(fileName);
         QTextStream stream(&file);
         stream << ui->plainTextEdit->toPlainText();
         stream.flush();
         file.close();
     }
+
 }
-//write sample info into a file. what about rest of script??
+
+//makes document with only the most important infos. Need to delete or more clearly distinguish from save().
 void MainWindow::on_actionSave_Script_triggered()
 {
     //the fileName is obtained in line 1247 i think. interface does not give option to name. must be automatic
@@ -1467,13 +1466,14 @@ void MainWindow::on_actionQuit_triggered()
     QApplication::quit();
 }
 
-//What is the tool button and what does it do?
+//"..." opens file Dialog
 void MainWindow::on_toolButton_clicked()
 {
     QDateTime local(QDateTime::currentDateTime());
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QString timestamp = local.toString("ddMMyy_hhmm");
     QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                        "C:\\Users\\ktd4279\\Documents\\runscript_"+timestamp, tr("GCL files (*.gcl)"));
+                        defaultLocation+ "runscript_" + timestamp, tr("GCL files (*.gcl)"));
     ui->lineEdit->setText(fName);
 }
 
