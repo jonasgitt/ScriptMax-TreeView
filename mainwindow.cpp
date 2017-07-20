@@ -1214,18 +1214,18 @@ void MainWindow::save(){
 //Tells the widget if it has been enabled or not in response to status of checkbox
 void MainWindow::on_checkBox_clicked(bool checked)
 {
-    //QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    //QDateTime local(QDateTime::currentDateTime());
-    //QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    //QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
-    if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
-        on_toolButton_clicked();
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QDateTime local(QDateTime::currentDateTime());
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
+   // if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
+    //    on_toolButton_clicked();
 
     if (checked){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
         ui->saveButton->setEnabled(true);
-        //ui->lineEdit->setText(fName);
+        ui->lineEdit->setText(fName);
     } else {
         ui->lineEdit->setEnabled(false);
         ui->toolButton->setEnabled(false);
@@ -1647,6 +1647,7 @@ void MainWindow::on_actionSave_GCL_file_triggered()
     else{
         ui->checkBox->setChecked(true);
         ui->tabWidget->setCurrentIndex(1);
+        on_checkBox_clicked(true);
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
