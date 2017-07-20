@@ -1605,3 +1605,32 @@ void MainWindow::on_OGcmd_pushButton_clicked()
 
 }
 */
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (areyousure()) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+
+bool MainWindow::areyousure()
+{
+    if (ui->checkBox->isChecked() || mySampleForm->sampleList.isEmpty())
+        return true;
+    const QMessageBox::StandardButton ret
+        = QMessageBox::warning(this, tr("Application"),
+                               tr("The document has been modified.\n"
+                                  "Are you sure you want to leave without saving?"),
+                               QMessageBox::Yes | QMessageBox::Cancel);
+    switch (ret) {
+    case QMessageBox::Yes:
+        return true;
+    case QMessageBox::Cancel:
+        return false;
+    default:
+        break;
+    }
+    return true;
+}

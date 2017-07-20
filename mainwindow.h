@@ -20,6 +20,9 @@ class MainWindow; //variables included in the namespace
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
     
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -100,6 +103,7 @@ private:
     QSignalMapper* signalMapper;
     SampleForm *mySampleForm;
     Highlighter* highlighter;
+    bool areyousure();
 
 };
 
