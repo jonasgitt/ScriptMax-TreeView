@@ -18,6 +18,7 @@
 #include <QTextStream>
 #include <QLineEdit>
 #include <QStandardPaths>
+#include <QSettings>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1189,6 +1190,25 @@ QStringList MainWindow::searchDashboard(QString instrument){
 
 
 }
+//used only once, at the end of Parsetable
+//is printed all onto one line :/
+void MainWindow::save(){
+
+
+    //lineEdit is the Save As box,
+    QString fileName = ui->lineEdit->text();
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Error","Could not save scriptfile.");
+    } else {
+        QTextStream stream(&file);
+        stream << ui->plainTextEdit->toPlainText();
+        stream.flush();
+        file.close();
+    }
+
+}
 
 
 //Tells the widget if it has been enabled or not in response to status of checkbox
@@ -1196,17 +1216,51 @@ void MainWindow::on_checkBox_clicked(bool checked)
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QDateTime local(QDateTime::currentDateTime());
-    QString defaultfileName = defaultLocation + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
     if (checked){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
-        ui->lineEdit->setPlaceholderText(defaultfileName);
+        ui->lineEdit->setText(fName);
     } else {
         ui->lineEdit->setEnabled(false);
         ui->toolButton->setEnabled(false);
     }
+}
+
+//"..." opens file Dialog
+void MainWindow::on_toolButton_clicked()
+{
+    QDateTime local(QDateTime::currentDateTime());
+    QString timestamp = local.toString("ddMMyy_hhmm");
+
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+
+    QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
+                        defaultLocation + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
+
+    ui->lineEdit->setText(fName);
+    QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
+    saveSettings("lastfileloc", saveloc, "savegroup");
+}
+
+void saveSettings(const QString &key, const QVariant &value, const QString &group)
+{
+    QSettings settings;
+    settings.beginGroup(group);
+    settings.setValue(key, value);
+    settings.endGroup();
+}
+
+QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
+{
+    QSettings settings;
+    settings.beginGroup(group);
+    QVariant value = settings.value(key, defaultValue);
+    settings.endGroup();
+    return value;
 }
 
 //checkbox2 is "use actual SE actions" on interface. If clicked, Temperature Options disappear from Run Options Combo Box
@@ -1239,24 +1293,6 @@ void MainWindow::on_checkBox_2_clicked(bool checked)
     }
 }
 
-//used only once, at the end of Parsetable
-//is printed all onto one line :/
-void MainWindow::save(){
-
-    //lineEdit is the Save As box,
-    QString fileName = ui->lineEdit->text();
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::warning(this, "Error","Could not save scriptfile.");
-    } else {
-        QTextStream stream(&file);
-        stream << ui->plainTextEdit->toPlainText();
-        stream.flush();
-        file.close();
-    }
-
-}
 
 //makes document with only the most important infos. Need to delete or more clearly distinguish from save().
 void MainWindow::on_actionSave_Script_triggered()
@@ -1483,16 +1519,7 @@ void MainWindow::on_actionQuit_triggered()
     QApplication::quit();
 }
 
-//"..." opens file Dialog
-void MainWindow::on_toolButton_clicked()
-{
-    QDateTime local(QDateTime::currentDateTime());
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString timestamp = local.toString("ddMMyy_hhmm");
-    QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                        defaultLocation+ "runscript_" + timestamp, tr("GCL files (*.gcl)"));
-    ui->lineEdit->setText(fName);
-}
+
 
 //Nothing Here
 void MainWindow::on_instrumentCombo_activated(const QString &arg1)

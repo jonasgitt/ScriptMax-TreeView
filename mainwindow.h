@@ -9,7 +9,7 @@
 #include <QComboBox>
 #include <QSignalMapper>
 #include <QTime>
-
+#include <QSettings>
 
 
 namespace Ui {
@@ -47,6 +47,8 @@ public:
     void runTrans(int row);
 
     void updateRunTime(double angle);
+
+
 
 
 public slots:
@@ -100,5 +102,8 @@ private:
     Highlighter* highlighter;
 
 };
+
+void saveSettings (const QString &key, const QVariant &value, const QString &group);
+QVariant loadSettings(const QString &key, const QVariant &defaultValue, const QString &group);
 
 #endif // MAINWINDOW_H
