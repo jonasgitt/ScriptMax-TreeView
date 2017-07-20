@@ -72,7 +72,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="Builder">
        <attribute name="title">
@@ -526,7 +526,7 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="4">
+          <item row="0" column="5">
            <spacer name="horizontalSpacer_3">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -538,19 +538,6 @@
              </size>
             </property>
            </spacer>
-          </item>
-          <item row="1" column="0" colspan="5">
-           <widget class="QPlainTextEdit" name="plainTextEdit">
-            <property name="font">
-             <font>
-              <family>Courier New</family>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="plainText">
-             <string/>
-            </property>
-           </widget>
           </item>
           <item row="0" column="0">
            <widget class="QCheckBox" name="checkBox">
@@ -570,6 +557,26 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="0" colspan="6">
+           <widget class="QPlainTextEdit" name="plainTextEdit">
+            <property name="font">
+             <font>
+              <family>Courier New</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="plainText">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QPushButton" name="saveButton">
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -585,7 +592,7 @@
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
-          <x>0</x>
+          <x>10</x>
           <y>0</y>
           <width>1145</width>
           <height>658</height>
@@ -598,9 +605,6 @@
             <string>OpenGenie:</string>
            </property>
           </widget>
-         </item>
-         <item row="0" column="1" colspan="2">
-          <widget class="QLineEdit" name="OGcmd_lineEdit"/>
          </item>
          <item row="0" column="3">
           <widget class="QPushButton" name="OGcmd_pushButton">
@@ -619,6 +623,9 @@
             <string>Use actual SE actions</string>
            </property>
           </widget>
+         </item>
+         <item row="0" column="1" colspan="2">
+          <widget class="QLineEdit" name="OGcmd_lineEdit"/>
          </item>
          <item row="0" column="5">
           <widget class="QCheckBox" name="checkBox_3">
@@ -647,21 +654,6 @@
          <item row="2" column="0" colspan="2">
           <widget class="QPlainTextEdit" name="plainTextEdit_2"/>
          </item>
-         <item row="2" column="2" colspan="4">
-          <widget class="QWebView" name="webView" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="url" stdset="0">
-            <url>
-             <string>http://dataweb.isis.rl.ac.uk/SeciWeb/WapPage.aspx?Instrument=inter</string>
-            </url>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </widget>
@@ -675,7 +667,7 @@
      <x>0</x>
      <y>0</y>
      <width>2169</width>
-     <height>43</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -730,7 +722,7 @@
   </widget>
   <action name="actionOpen_Script">
    <property name="text">
-    <string>Open Script</string>
+    <string>Open Table</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -738,7 +730,13 @@
   </action>
   <action name="actionSave_Script">
    <property name="text">
-    <string>Save Script</string>
+    <string>Save Table</string>
+   </property>
+   <property name="iconText">
+    <string>Save Table</string>
+   </property>
+   <property name="toolTip">
+    <string>Save Table</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -746,7 +744,7 @@
   </action>
   <action name="actionSave_Script_As">
    <property name="text">
-    <string>Save Script As</string>
+    <string>Save Table As</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
@@ -802,6 +800,9 @@
    </property>
   </action>
   <action name="actionNew_Script">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>New Script</string>
    </property>
@@ -829,13 +830,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>QWebView</class>
-   <extends>QWidget</extends>
-   <header>QtWebKitWidgets/QWebView</header>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="ScriptMax_resource.qrc"/>
  </resources>

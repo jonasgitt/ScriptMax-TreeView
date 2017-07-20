@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //ui->tabWidget->setTabEnabled(2,false);
 
-
+     ui->saveButton->setEnabled(false);
     initMainTable();
 
     //mySampleForm is an object of type SampleForm
@@ -115,7 +115,7 @@ void MainWindow::initMainTable(){
 
 }
 
-//don't really understand. Context Menu is right click?
+//this is a right-click
 void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
 {
     // for most widgets
@@ -1214,19 +1214,22 @@ void MainWindow::save(){
 //Tells the widget if it has been enabled or not in response to status of checkbox
 void MainWindow::on_checkBox_clicked(bool checked)
 {
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QDateTime local(QDateTime::currentDateTime());
-
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
+    //QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    //QDateTime local(QDateTime::currentDateTime());
+    //QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    //QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
+    if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
+        on_toolButton_clicked();
 
     if (checked){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
-        ui->lineEdit->setText(fName);
+        ui->saveButton->setEnabled(true);
+        //ui->lineEdit->setText(fName);
     } else {
         ui->lineEdit->setEnabled(false);
         ui->toolButton->setEnabled(false);
+        ui->saveButton->setEnabled(false);
     }
 }
 
@@ -1237,9 +1240,9 @@ void MainWindow::on_toolButton_clicked()
     QString timestamp = local.toString("ddMMyy_hhmm");
 
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
     QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                        defaultLocation + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
+                        lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
 
     ui->lineEdit->setText(fName);
     QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
@@ -1633,4 +1636,22 @@ bool MainWindow::areyousure()
         break;
     }
     return true;
+}
+
+
+
+void MainWindow::on_actionSave_GCL_file_triggered()
+{
+    if (ui->checkBox->isChecked())
+        save();
+    else{
+        ui->checkBox->setChecked(true);
+        ui->tabWidget->setCurrentIndex(1);
+        QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
+    }
+}
+
+void MainWindow::on_saveButton_clicked()
+{
+    save();
 }

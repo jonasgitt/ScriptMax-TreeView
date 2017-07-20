@@ -90,7 +90,9 @@ private slots:
     void on_actionHow_To_triggered();
     void on_actionAbout_ScriptMax_triggered();
     void on_clearTableButton_clicked();
+    void on_actionSave_GCL_file_triggered();
 
+    void on_saveButton_clicked();
 
 protected slots:
     void onDeviceSelected(int value);
