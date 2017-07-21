@@ -10,6 +10,60 @@
 #include "runoptions.h"
 #include <QApplication>
 
+QString writeSamples(QList<NRSample> samples){
+
+    QString scriptLine;
+     for (int i=0; i < samples.length(); i++){
+        scriptLine += "s" + QString::number(i+1) + "=fields(); ";
+     }
+
+     scriptLine += "\n#====================================\n";
+
+     for (int i=0; i < samples.length(); i++){
+
+        //scriptLine += ("            s" + QString::number(i+1) + " = create(\"NR_sample\")\n"); //sample numbering starts at 1
+
+        QString temp = samples[i].title;
+        scriptLine += ("      s" + QString::number(i+1) + ".title = \""+temp+"\"\n");
+
+        temp = QString::number(samples[i].translation);
+        scriptLine += ("s" + QString::number(i+1) + ".translation = "+temp+"\n");
+
+        temp = QString::number(samples[i].height);
+        scriptLine += ("     s" + QString::number(i+1) + ".height = "+temp+"\n");
+
+        temp = samples[i].phi_offset;
+        scriptLine += (" s" + QString::number(i+1) + ".phi_offset = "+temp+"\n");
+
+        temp = QString::number(samples[i].footprint);
+        scriptLine += ("  s" + QString::number(i+1) + ".footprint = "+temp+"\n");
+
+        temp = QString::number(samples[i].resolution);
+        scriptLine += (" s" + QString::number(i+1) + ".resolution = "+temp+"\n");
+
+        temp = QString::number(samples[i].s3);
+        scriptLine += ("         s" + QString::number(i+1) + ".s3 = "+temp+"\n");
+
+        temp = QString::number(samples[i].s4);
+        scriptLine += ("         s" + QString::number(i+1) + ".s4 = "+temp+"\n");
+
+        temp = QString::number(samples[i].knauer);
+        scriptLine += ("     s" + QString::number(i+1) + ".knauer = "+temp+"\n");
+
+        scriptLine += "#====================================\n";
+
+    }
+
+    scriptLine += "sample=dimensions(" + QString::number(samples.length()) + ")\n";
+
+    for (int i=0; i < samples.length(); i++){
+       scriptLine += "sample[" + QString::number(i+1) + "]=s" + QString::number(i+1) + "; ";
+    }
+
+    return scriptLine;
+
+}
+
 
 QString writeRun(runstruct &runvars, bool runSM){
 

@@ -1,19 +1,13 @@
-
-Subclass class=\"NR_sample"\ superclass=\"Structure"\ comment=\sample paramter defintion class\&
-			names=\"title subtitile translation height phi_offset footprint resolution s3 s4 knauer"\
+FORWARD experimentsettings
 
 PROCEDURE runscript 
 GLOBAL runTime
+LOCAL ii
 
 CHANGE NPERIODS=1
+cset monitor 1
+experimentsettings
 
-
-#====================================
-#These are our samples:
-#====================================
-
-
-#====================================
 #====================================
 #Script body begins here:
 #====================================
@@ -27,6 +21,15 @@ printn runTime "minutes"
 
 ENDPROCEDURE
 
+PROCEDURE experimentsettings
+GLOBAL sample
 
-runscript
+#====================================
+#Generic settings for all samples which 
+#do not need to be changed during experiment.
+#====================================
 
+
+#====================================
+
+ENDPROCEDURE

@@ -51,6 +51,8 @@ public:
 
     void updateRunTime(double angle);
 
+    void samplestoPlainTextEdit();
+
 
 
 

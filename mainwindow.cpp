@@ -22,9 +22,9 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow) //need Ui:: since MainWindow is in the Ui namespace
+    ui(new Ui::MainWindow)
 {
-    ui->setupUi(this); //setupUI defined in mainwindow.h
+    ui->setupUi(this);
 
     fileName = "";
 
@@ -36,17 +36,13 @@ MainWindow::MainWindow(QWidget *parent) :
      ui->saveButton->setEnabled(false);
     initMainTable();
 
-    //mySampleForm is an object of type SampleForm
-    // create sample form window, but do not show yet. SampleForm() is a constructor
-    //'new' just means the object is not automatically destroyed once it goes out of scope (its stored on heap)
+
     mySampleForm = new SampleForm(); // Be sure to destroy this window somewhere
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
 
     //on sampleform
     connect(mySampleForm,SIGNAL(button3Clicked()),this, SLOT(parseTableSlot()));
 
-    // !! reps the main table tableWidget_1 is not actually defined anywhere but in an old build
-    //tableWidget sends out a signal when the current cell changes, widgets respond to signal by executing parseTableSlot()
     connect(ui->tableWidget_1,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(parseTableSlot()));
 
     parseTable();
@@ -115,134 +111,6 @@ void MainWindow::initMainTable(){
 
 }
 
-//this is a right-click
-void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
-{
-    // for most widgets
-    QPoint globalPos = ui->tableWidget_1->mapToGlobal(pos);
-    // for QAbstractScrollArea and derived classes you would use:
-    // QPoint globalPos = myWidget->viewport()->mapToGlobal(pos);
-
-    QMenu myMenu;
-    myMenu.addAction(new QAction("Insert Empty Row", this));
-    //connect(newAction, SIGNAL(triggered()), this, SLOT(insertEmptyRow()));
-    myMenu.addAction(new QAction("Delete Row", this));
-    // ...
-
-    QAction* selectedItem = myMenu.exec(globalPos);
-    if (selectedItem)
-    {
-        int row = ui->tableWidget_1->row(ui->tableWidget_1->itemAt(pos));
-        ui->tableWidget_1->item(2,2)->setText(QString::number(row));
-        // something was chosen, do stuff
-    }
-    else
-    {
-        // nothing was chosen
-    }
-}
-
-
-//Not in Use
-//opens genie and hands it the script using GX library
-void MainWindow::runGenie(){
-
-    QString qtStrData;
-    QByteArray inBytes;
-    const char *cStrData;
-
-
-    //-------------------------
-    char    s[256];
-
-    int*    b;
-    int dims[1];
-
-    char bb[5];
-        //float   cc[2];
-        //double  dd[2];
-
-    int ndims = 1;
-    QString itemText = "";
-/*
-    qtStrData = ui->tableWidget_1->item(0,1)->text();
-    inBytes = qtStrData.toUtf8();
-    cStrData = inBytes.constData();
-    GX_ASSIGN_HANDLE(cStrData,"");
-*/
-/*
-    QTableWidgetItem* item = new QTableWidgetItem();
-    item->setIcon(*(new QIcon("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/large_gears.gif")));
-    ui->tableWidget_1->setVerticalHeaderItem(1,item);
-
-    GX_select_source("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/INTER00025720.raw");
-    GX_get("VV", "SPEC", 0);            // Integer array
-    GX_assign_handle("_a", "printn(VV)");
-    GX_ASSIGN_HANDLE("begin; waitfor seconds=10;abort","");
-    GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
-    GX_ASSIGN_HANDLE("printn rs", "");
-
-
-    while (itemText!="SETUP"){
-        GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
-        dims[0] = 256;
-        GX_transfer("rs", "-->", "STRING", s, &ndims, dims );
-        itemText = QString::fromStdString(s);
-        ui->tableWidget_1->item(5,1)->setText(itemText);
-        printf("%s", "waiting...\n");
-    }
-    printf("%s", "FINISHED\n");
-    itemText = QString::fromStdString(s);
-    ui->tableWidget_1->item(5,1)->setText(itemText);
-
-    for(int col=1; col<ui->tableWidget_1->columnCount();++col){
-        ui->tableWidget_1->item(1,col)->setBackground(Qt::Dense4Pattern);
-    }
-    qtStrData = "VV["+ui->tableWidget_1->item(0,1)->text()+"]";
-    inBytes = qtStrData.toUtf8();
-    cStrData = inBytes.constData();
-
-
-    dims[0]=5;
-    ndims=1;
-    GX_transfer("VV", "-->", "INT32[]", bb, &ndims, dims );
-    printf("ARRAY: %c\n", bb[0]);
-    QString txt = QString().sprintf("%c",bb[0]);
-    ui->tableWidget_1->item(3,3)->setText(txt);
-    //-------------------------
-
-
-    QStringList SECIblocks = searchDashboard(ui->instrumentCombo->currentText());
-    ui->comboBox->addItems(SECIblocks);
-
-*/
-
-
-    //GX_ASSIGN_HANDLE(cStrData,"");
-
-    //GX_get("V1", "", 2);            // Integer#
-    //GX_assign_handle("VV=42", "");
-    //GX_GET("VV","",0);
-    //GX_ASSIGN_HANDLE("__th", "printn(VV)");
-    //GX_transfer("VV", "-->", "INT64", &b, 0, 0);
-
-    //ui->tableWidget_1->item(0,8)->setText(QString::number(b));
-
-
-
-    /*
-    QProcess *process = new QProcess(this);
-    //QString file = "%GENIE_DIR%\\tkgenie32.exe -l";
-    save();
-    QString file = "\"C:\\Users\\ktd43279\\Max_tkgenie32.bat\"";
-    process->start(file);
-    //system("start "\"C:\\Program Files (x86)\\CCLRC ISIS Facility\\Open GENIE\\tkgenie32.bat\""");
-    */
-
-
-}
-
-
 
 //this is identical to parseTable(), which extracts the data from the table
 void MainWindow::parseTableSlot(){
@@ -265,64 +133,16 @@ void MainWindow::writeBackbone(){
 
     OGfile.close();
 
-    //SAMPLE NAMING DOESN'T MATCH USER INPUT
+
     ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
     for (int i=0; i < mySampleForm->sampleList.length(); i++){
         ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1)); // sample numbering starts with 1
     }
 
-    ui->plainTextEdit->find("#These are our samples:"); //positions the cursor to insert instructions
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
-    defineSamples();
 
 
-    ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
-}
-
-void MainWindow::defineSamples(){
-
-    // define samples:
-    for (int i=0; i < mySampleForm->sampleList.length(); i++){
-
-        ui->plainTextEdit->insertPlainText("            s" + QString::number(i+1) + " = create(\"NR_sample\")\n"); //sample numbering starts at 1
-
-        QString temp = mySampleForm->sampleList[i].title;
-        ui->plainTextEdit->insertPlainText("      s" + QString::number(i+1) + ".title = \""+temp+"\"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].translation);
-        ui->plainTextEdit->insertPlainText("s" + QString::number(i+1) + ".translation = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].height);
-        ui->plainTextEdit->insertPlainText("     s" + QString::number(i+1) + ".height = "+temp+"\n");
-
-        temp = mySampleForm->sampleList[i].phi_offset;
-        ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1) + ".phi_offset = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].footprint);
-        ui->plainTextEdit->insertPlainText("  s" + QString::number(i+1) + ".footprint = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].resolution);
-        ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1) + ".resolution = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].s3);
-        ui->plainTextEdit->insertPlainText("         s" + QString::number(i+1) + ".s3 = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].s4);
-        ui->plainTextEdit->insertPlainText("         s" + QString::number(i+1) + ".s4 = "+temp+"\n");
-
-        temp = QString::number(mySampleForm->sampleList[i].knauer);
-        ui->plainTextEdit->insertPlainText("     s" + QString::number(i+1) + ".knauer = "+temp+"\n");
-
-    }
-
-}
-
-//nothing there
-QString makeLine(QString action, QStringList args){
 
 }
 
@@ -346,6 +166,9 @@ void MainWindow::parseTable(){
     // prepare script header
     ui->plainTextEdit->clear();
     writeBackbone();
+
+    ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
     // process each table row
     for (int row=0; row < ui->tableWidget_1->rowCount(); row++){
@@ -381,9 +204,23 @@ void MainWindow::parseTable(){
                 break;
         }
     }
+    samplestoPlainTextEdit();
     if(ui->checkBox->isChecked()){
         save();
     }
+
+
+}
+//------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
+//---------------------------------RUNOPTIONS-----------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
+void MainWindow::samplestoPlainTextEdit(){
+    ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
+    QList<NRSample> samples = mySampleForm->sampleList;
+    ui->plainTextEdit->insertPlainText(writeSamples(samples));
 }
 
 void MainWindow::normalRun(int row, bool runSM){
@@ -625,6 +462,11 @@ void MainWindow::runTrans(int row){
     return;
 }
 
+//-----------------------------------------RUNOPTIONS OVER----------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------//
 void MainWindow::updateRunTime(double angle){
     int secs;
     if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
@@ -647,8 +489,7 @@ void MainWindow::openSampleForm()
    // ...
 }
 
-//Checks and Updates SampleForm and SampleTable (have the two been mixed together? resolve when deleting one)
-//maybe put this is in sampleform.cpp instead?
+
 void MainWindow::updateSamplesSlot(){
     bool ok;
 
@@ -1092,7 +933,37 @@ void  MainWindow::onRunSelected(int value)
     //emit valueChanged(value);
 }
 
+//-------------------------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------------//
+//-----------------------------------COPY CUT PASTE ETC--------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------------//
 
+//this is a right-click
+void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
+{
+    // for most widgets
+    QPoint globalPos = ui->tableWidget_1->mapToGlobal(pos);
+    // for QAbstractScrollArea and derived classes you would use:
+    // QPoint globalPos = myWidget->viewport()->mapToGlobal(pos);
+
+    QMenu myMenu;
+    myMenu.addAction(new QAction("Insert Empty Row", this));
+    //connect(newAction, SIGNAL(triggered()), this, SLOT(insertEmptyRow()));
+    myMenu.addAction(new QAction("Delete Row", this));
+    // ...
+
+    QAction* selectedItem = myMenu.exec(globalPos);
+    if (selectedItem)
+    {
+        int row = ui->tableWidget_1->row(ui->tableWidget_1->itemAt(pos));
+        ui->tableWidget_1->item(2,2)->setText(QString::number(row));
+        // something was chosen, do stuff
+    }
+    else
+    {
+        // nothing was chosen
+    }
+}
 
 QTableWidgetSelectionRange MainWindow::selectedRange() const
 {
@@ -1172,99 +1043,9 @@ void MainWindow::on_actionCut_triggered()
     on_actionDelete_triggered();
 }
 
-//??Searches for something, used in on_checkbox_2_clicked
-//searches web dashboard for SE options
-QStringList MainWindow::searchDashboard(QString instrument){
-
-    //these are unused as of now. QRegExp is usually used for searching, validating
-    QRegExp groups("<span style=\"font-weight:bold;\">([a-zA-Z0-9 ]+)</span>");
-    QRegExp blocks("<li>([a-zA-Z0-9 _]+):");
-
-    QStringList list;
-    QStringList list2;
-
-    ui->plainTextEdit_2->clear();
-
-    //qWarning() << list;
-    return list;
 
 
-}
-//used only once, at the end of Parsetable
-//is printed all onto one line :/
-void MainWindow::save(){
 
-
-    //lineEdit is the Save As box,
-    QString fileName = ui->lineEdit->text();
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::warning(this, "Error","Could not save scriptfile.");
-    } else {
-        QTextStream stream(&file);
-        stream << ui->plainTextEdit->toPlainText();
-        stream.flush();
-        file.close();
-    }
-
-}
-
-
-//Tells the widget if it has been enabled or not in response to status of checkbox
-void MainWindow::on_checkBox_clicked(bool checked)
-{
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QDateTime local(QDateTime::currentDateTime());
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
-   // if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
-    //    on_toolButton_clicked();
-
-    if (checked){
-        ui->lineEdit->setEnabled(true);
-        ui->toolButton->setEnabled(true);
-        ui->saveButton->setEnabled(true);
-        ui->lineEdit->setText(fName);
-    } else {
-        ui->lineEdit->setEnabled(false);
-        ui->toolButton->setEnabled(false);
-        ui->saveButton->setEnabled(false);
-    }
-}
-
-//"..." opens file Dialog
-void MainWindow::on_toolButton_clicked()
-{
-    QDateTime local(QDateTime::currentDateTime());
-    QString timestamp = local.toString("ddMMyy_hhmm");
-
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                        lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
-
-    ui->lineEdit->setText(fName);
-    QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
-    saveSettings("lastfileloc", saveloc, "savegroup");
-}
-
-void saveSettings(const QString &key, const QVariant &value, const QString &group)
-{
-    QSettings settings;
-    settings.beginGroup(group);
-    settings.setValue(key, value);
-    settings.endGroup();
-}
-
-QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
-{
-    QSettings settings;
-    settings.beginGroup(group);
-    QVariant value = settings.value(key, defaultValue);
-    settings.endGroup();
-    return value;
-}
 
 //checkbox2 is "use actual SE actions" on interface. If clicked, Temperature Options disappear from Run Options Combo Box
 void MainWindow::on_checkBox_2_clicked(bool checked)
@@ -1297,94 +1078,6 @@ void MainWindow::on_checkBox_2_clicked(bool checked)
 }
 
 
-//makes document with only the most important infos. Need to delete or more clearly distinguish from save().
-void MainWindow::on_actionSave_Script_triggered()
-{
-    //the fileName is obtained in line 1247 i think. interface does not give option to name. must be automatic
-    if (fileName != "") {
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            // error message
-        } else {
-            // SAVE SAMPLE INFORMATION...
-            //================================================
-            QTextStream out(&file);
-            out << "#SAMPLES title, translation, height, phi_offset, footprint, resolution, s3, s4\n";
-            for(int i = 0; i < mySampleForm->sampleList.length(); i++){
-                out << mySampleForm->sampleList[i].title << ",";
-                out << QString::number(mySampleForm->sampleList[i].translation) << ",";
-                out << QString::number(mySampleForm->sampleList[i].height) << ",";
-                out << mySampleForm->sampleList[i].phi_offset << ",";
-                out << QString::number(mySampleForm->sampleList[i].footprint) << ",";
-                out << QString::number(mySampleForm->sampleList[i].resolution) << ",";
-                out << QString::number(mySampleForm->sampleList[i].s3) << ",";
-                out << QString::number(mySampleForm->sampleList[i].s4) << ",";
-                out << QString::number(mySampleForm->sampleList[i].knauer) << "\n";
-            }
-            out << "#TABLE\n";
-            for(int row = 0; row < ui->tableWidget_1->rowCount(); row++){
-                QComboBox* box1 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,0));
-                QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-                if(box1 && box2){
-                        out << box1->currentText() << "," << box2->currentText(); // which action and which sample etc.
-                    if(box1->currentText() == "contrastchange"){
-                        for(int col = 2; col < 8; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        QComboBox* box3 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,8));
-                        out << "," << box3->currentText();
-                        out << "\n";
-                    } else if(box2->currentText().contains("Julabo Waterbath")){
-                        out << "," << ui->tableWidget_1->item(row,2)->text();
-                        QComboBox* box4 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,3));
-                        out << "," << box4->currentText();
-                        for(int col = 4; col < 9; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        out << "\n";
-                    } else {
-                        for(int col = 2; col < 9; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        out << "\n";
-                    }
-                }
-            }
-        }
-        file.close();
-    }
-    else{
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("You haven't specified a filename or directory.");
-        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Save);
-        int ret = msgBox.exec();
-
-        switch (ret) {
-          case QMessageBox::Save:
-              // Save was clicked
-              on_actionSave_Script_As_triggered();
-              initMainTable();
-              break;
-          case QMessageBox::Cancel:
-              // Cancel was clicked
-              break;
-          default:
-              // should never be reached
-              break;
-        }
-    }
-}
-
-//??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
-void MainWindow::on_actionSave_Script_As_triggered()
-{
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
-                                           defaultLocation, tr("Script files (*.scp)")); //tr is used to enable translation bw languages
-    on_actionSave_Script_triggered();
-}
 
 //??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
 void MainWindow::on_actionOpen_Script_triggered()
@@ -1573,6 +1266,325 @@ void MainWindow::on_clearTableButton_clicked()
     if (sure) initMainTable();
 }
 
+
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (areyousure()) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
+}
+
+bool MainWindow::areyousure()
+{
+    if (ui->checkBox->isChecked() || mySampleForm->sampleList.isEmpty())
+        return true;
+    const QMessageBox::StandardButton ret
+        = QMessageBox::warning(this, tr("Application"),
+                               tr("The document has been modified.\n"
+                                  "Are you sure you want to leave without saving?"),
+                               QMessageBox::Yes | QMessageBox::Cancel);
+    switch (ret) {
+    case QMessageBox::Yes:
+        return true;
+    case QMessageBox::Cancel:
+        return false;
+    default:
+        break;
+    }
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------------//
+//--------------------------------SAVE STUFF-------------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------//
+
+void MainWindow::on_actionSave_GCL_file_triggered()
+{
+    if (ui->checkBox->isChecked())
+        save();
+    else{
+        ui->checkBox->setChecked(true);
+        ui->tabWidget->setCurrentIndex(1);
+        on_checkBox_clicked(true);
+        QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
+    }
+}
+
+void MainWindow::on_saveButton_clicked()
+{
+    save();
+}
+
+//used only once, at the end of Parsetable
+void MainWindow::save(){
+
+
+    //lineEdit is the Save As box,
+    QString fileName = ui->lineEdit->text();
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Error","Could not save scriptfile.");
+    } else {
+        QTextStream stream(&file);
+        stream << ui->plainTextEdit->toPlainText();
+        stream.flush();
+        file.close();
+    }
+
+}
+
+
+//Tells the widget if it has been enabled or not in response to status of checkbox
+void MainWindow::on_checkBox_clicked(bool checked)
+{
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QDateTime local(QDateTime::currentDateTime());
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
+   // if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
+    //    on_toolButton_clicked();
+
+    if (checked){
+        ui->lineEdit->setEnabled(true);
+        ui->toolButton->setEnabled(true);
+        ui->saveButton->setEnabled(true);
+        ui->lineEdit->setText(fName);
+    } else {
+        ui->lineEdit->setEnabled(false);
+        ui->toolButton->setEnabled(false);
+        ui->saveButton->setEnabled(false);
+    }
+}
+
+//"..." opens file Dialog
+void MainWindow::on_toolButton_clicked()
+{
+    QDateTime local(QDateTime::currentDateTime());
+    QString timestamp = local.toString("ddMMyy_hhmm");
+
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
+                        lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
+
+    ui->lineEdit->setText(fName);
+    QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
+    saveSettings("lastfileloc", saveloc, "savegroup");
+}
+
+void saveSettings(const QString &key, const QVariant &value, const QString &group)
+{
+    QSettings settings;
+    settings.beginGroup(group);
+    settings.setValue(key, value);
+    settings.endGroup();
+}
+
+QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
+{
+    QSettings settings;
+    settings.beginGroup(group);
+    QVariant value = settings.value(key, defaultValue);
+    settings.endGroup();
+    return value;
+}
+
+//makes document with only the most important infos. Need to delete or more clearly distinguish from save().
+void MainWindow::on_actionSave_Script_triggered()
+{
+    //the fileName is obtained in line 1247 i think. interface does not give option to name. must be automatic
+    if (fileName != "") {
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            // error message
+        } else {
+            // SAVE SAMPLE INFORMATION...
+            //================================================
+            QTextStream out(&file);
+            out << "#SAMPLES title, translation, height, phi_offset, footprint, resolution, s3, s4\n";
+            for(int i = 0; i < mySampleForm->sampleList.length(); i++){
+                out << mySampleForm->sampleList[i].title << ",";
+                out << QString::number(mySampleForm->sampleList[i].translation) << ",";
+                out << QString::number(mySampleForm->sampleList[i].height) << ",";
+                out << mySampleForm->sampleList[i].phi_offset << ",";
+                out << QString::number(mySampleForm->sampleList[i].footprint) << ",";
+                out << QString::number(mySampleForm->sampleList[i].resolution) << ",";
+                out << QString::number(mySampleForm->sampleList[i].s3) << ",";
+                out << QString::number(mySampleForm->sampleList[i].s4) << ",";
+                out << QString::number(mySampleForm->sampleList[i].knauer) << "\n";
+            }
+            out << "#TABLE\n";
+            for(int row = 0; row < ui->tableWidget_1->rowCount(); row++){
+                QComboBox* box1 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,0));
+                QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
+                if(box1 && box2){
+                        out << box1->currentText() << "," << box2->currentText(); // which action and which sample etc.
+                    if(box1->currentText() == "contrastchange"){
+                        for(int col = 2; col < 8; col++){
+                            out << "," << ui->tableWidget_1->item(row,col)->text();
+                        }
+                        QComboBox* box3 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,8));
+                        out << "," << box3->currentText();
+                        out << "\n";
+                    } else if(box2->currentText().contains("Julabo Waterbath")){
+                        out << "," << ui->tableWidget_1->item(row,2)->text();
+                        QComboBox* box4 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,3));
+                        out << "," << box4->currentText();
+                        for(int col = 4; col < 9; col++){
+                            out << "," << ui->tableWidget_1->item(row,col)->text();
+                        }
+                        out << "\n";
+                    } else {
+                        for(int col = 2; col < 9; col++){
+                            out << "," << ui->tableWidget_1->item(row,col)->text();
+                        }
+                        out << "\n";
+                    }
+                }
+            }
+        }
+        file.close();
+    }
+    else{
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setText("You haven't specified a filename or directory.");
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Save);
+        int ret = msgBox.exec();
+
+        switch (ret) {
+          case QMessageBox::Save:
+              // Save was clicked
+              on_actionSave_Script_As_triggered();
+              initMainTable();
+              break;
+          case QMessageBox::Cancel:
+              // Cancel was clicked
+              break;
+          default:
+              // should never be reached
+              break;
+        }
+    }
+}
+
+//??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
+void MainWindow::on_actionSave_Script_As_triggered()
+{
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
+                                           defaultLocation, tr("Script files (*.scp)")); //tr is used to enable translation bw languages
+    on_actionSave_Script_triggered();
+}
+
+//--------------------------------------------------------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------NOT IN USE------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
+
+//opens genie and hands it the script using GX library
+void MainWindow::runGenie(){
+
+    QString qtStrData;
+    QByteArray inBytes;
+    const char *cStrData;
+
+
+    //-------------------------
+    char    s[256];
+
+    int*    b;
+    int dims[1];
+
+    char bb[5];
+        //float   cc[2];
+        //double  dd[2];
+
+    int ndims = 1;
+    QString itemText = "";
+/*
+    qtStrData = ui->tableWidget_1->item(0,1)->text();
+    inBytes = qtStrData.toUtf8();
+    cStrData = inBytes.constData();
+    GX_ASSIGN_HANDLE(cStrData,"");
+*/
+/*
+    QTableWidgetItem* item = new QTableWidgetItem();
+    item->setIcon(*(new QIcon("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/large_gears.gif")));
+    ui->tableWidget_1->setVerticalHeaderItem(1,item);
+
+    GX_select_source("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/INTER00025720.raw");
+    GX_get("VV", "SPEC", 0);            // Integer array
+    GX_assign_handle("_a", "printn(VV)");
+    GX_ASSIGN_HANDLE("begin; waitfor seconds=10;abort","");
+    GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
+    GX_ASSIGN_HANDLE("printn rs", "");
+
+
+    while (itemText!="SETUP"){
+        GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
+        dims[0] = 256;
+        GX_transfer("rs", "-->", "STRING", s, &ndims, dims );
+        itemText = QString::fromStdString(s);
+        ui->tableWidget_1->item(5,1)->setText(itemText);
+        printf("%s", "waiting...\n");
+    }
+    printf("%s", "FINISHED\n");
+    itemText = QString::fromStdString(s);
+    ui->tableWidget_1->item(5,1)->setText(itemText);
+
+    for(int col=1; col<ui->tableWidget_1->columnCount();++col){
+        ui->tableWidget_1->item(1,col)->setBackground(Qt::Dense4Pattern);
+    }
+    qtStrData = "VV["+ui->tableWidget_1->item(0,1)->text()+"]";
+    inBytes = qtStrData.toUtf8();
+    cStrData = inBytes.constData();
+
+
+    dims[0]=5;
+    ndims=1;
+    GX_transfer("VV", "-->", "INT32[]", bb, &ndims, dims );
+    printf("ARRAY: %c\n", bb[0]);
+    QString txt = QString().sprintf("%c",bb[0]);
+    ui->tableWidget_1->item(3,3)->setText(txt);
+    //-------------------------
+
+
+    QStringList SECIblocks = searchDashboard(ui->instrumentCombo->currentText());
+    ui->comboBox->addItems(SECIblocks);
+
+*/
+
+
+    //GX_ASSIGN_HANDLE(cStrData,"");
+
+    //GX_get("V1", "", 2);            // Integer#
+    //GX_assign_handle("VV=42", "");
+    //GX_GET("VV","",0);
+    //GX_ASSIGN_HANDLE("__th", "printn(VV)");
+    //GX_transfer("VV", "-->", "INT64", &b, 0, 0);
+
+    //ui->tableWidget_1->item(0,8)->setText(QString::number(b));
+
+
+
+    /*
+    QProcess *process = new QProcess(this);
+    //QString file = "%GENIE_DIR%\\tkgenie32.exe -l";
+    save();
+    QString file = "\"C:\\Users\\ktd43279\\Max_tkgenie32.bat\"";
+    process->start(file);
+    //system("start "\"C:\\Program Files (x86)\\CCLRC ISIS Facility\\Open GENIE\\tkgenie32.bat\""");
+    */
+
+
+}
+
 //Customise Commands Field
 /*
 void MainWindow::on_OG_checkBox_stateChanged(int arg1)
@@ -1609,50 +1621,20 @@ void MainWindow::on_OGcmd_pushButton_clicked()
 }
 */
 
-void MainWindow::closeEvent(QCloseEvent *event)
-{
-    if (areyousure()) {
-        event->accept();
-    } else {
-        event->ignore();
-    }
-}
+//searches web dashboard for SE options
+QStringList MainWindow::searchDashboard(QString instrument){
 
-bool MainWindow::areyousure()
-{
-    if (ui->checkBox->isChecked() || mySampleForm->sampleList.isEmpty())
-        return true;
-    const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, tr("Application"),
-                               tr("The document has been modified.\n"
-                                  "Are you sure you want to leave without saving?"),
-                               QMessageBox::Yes | QMessageBox::Cancel);
-    switch (ret) {
-    case QMessageBox::Yes:
-        return true;
-    case QMessageBox::Cancel:
-        return false;
-    default:
-        break;
-    }
-    return true;
-}
+    //these are unused as of now. QRegExp is usually used for searching, validating
+    QRegExp groups("<span style=\"font-weight:bold;\">([a-zA-Z0-9 ]+)</span>");
+    QRegExp blocks("<li>([a-zA-Z0-9 _]+):");
+
+    QStringList list;
+    QStringList list2;
+
+   //accidently removed a line
+
+    //qWarning() << list;
+    return list;
 
 
-
-void MainWindow::on_actionSave_GCL_file_triggered()
-{
-    if (ui->checkBox->isChecked())
-        save();
-    else{
-        ui->checkBox->setChecked(true);
-        ui->tabWidget->setCurrentIndex(1);
-        on_checkBox_clicked(true);
-        QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
-    }
-}
-
-void MainWindow::on_saveButton_clicked()
-{
-    save();
 }

@@ -1,4 +1,4 @@
-//OBSOLETE. WILL NOT BE USED
+
 
 #ifndef SAMPLEFORM_H //checks if a flag has been set. these are known as flags btw
 #define SAMPLEFORM_H
