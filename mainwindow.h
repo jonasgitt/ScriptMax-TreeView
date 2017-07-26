@@ -11,7 +11,8 @@
 #include <QTime>
 #include <QSettings>
 #include "pyhighlighter.h"
-
+#include <QTimer>
+#include <QProgressBar>
 
 namespace Ui {
 class MainWindow; //variables included in the namespace
@@ -98,7 +99,7 @@ private slots:
     void on_saveButton_clicked();
 
     void on_PythonButton_clicked();
-
+void updateProgBar();
     void on_OGButton_clicked();
 
 protected slots:
@@ -113,7 +114,14 @@ private:
     SampleForm *mySampleForm;
     Highlighter* OGhighlighter;
     KickPythonSyntaxHighlighter* pyhighlighter;
+    QTimer *timer;
+    QProgressBar *bar;
+    int counter;
+
     bool areyousure();
+    void ProgressBar();
+
+
 
 };
 

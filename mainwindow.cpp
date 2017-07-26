@@ -20,6 +20,9 @@
 #include <QStandardPaths>
 #include <QSettings>
 #include "pyhighlighter.h"
+#include <QProgressBar>
+#include <QTimer>
+#include <QSize>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -36,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
 
     initMainTable();
-
+counter = 90; ProgressBar();
 
     mySampleForm = new SampleForm(); // Be sure to destroy this window somewhere
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
@@ -1346,9 +1349,10 @@ void MainWindow::on_checkBox_clicked(bool checked)
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QDateTime local(QDateTime::currentDateTime());
     QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
-   // if(ui->checkBox->isChecked() && ui->lineEdit->text().isEmpty())
-    //    on_toolButton_clicked();
+    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm");
+
+    if (ui->OGButton->isChecked()) fName += ".gcl";
+    else fName += ".py";
 
     if (checked){
         ui->lineEdit->setEnabled(true);
@@ -1370,9 +1374,14 @@ void MainWindow::on_toolButton_clicked()
 
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                        lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
 
+    QString fName;
+    if (ui->OGButton->isChecked())
+       fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
+                        lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
+    else
+        fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
+                                             lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
     ui->lineEdit->setText(fName);
     QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
     saveSettings("lastfileloc", saveloc, "savegroup");
@@ -1480,7 +1489,7 @@ void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
-                                           defaultLocation, tr("Script files (*.scp)")); //tr is used to enable translation bw languages
+                                           defaultLocation, tr("Script files (*.scp)"));
     on_actionSave_Script_triggered();
 }
 
@@ -1652,4 +1661,41 @@ void MainWindow::on_OGButton_clicked()
 {
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
     writeBackbone();
+}
+
+//NEED TO CONFIGURE THIS TO TAKE AN INPUT OF ROW, TIME
+void MainWindow::ProgressBar(){
+
+
+    bar = new QProgressBar();
+    bar->setMinimumSize(73, 18);//need this to fill box
+    ui->tableWidget_1->setCellWidget(1,10,bar);
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(updateProgBar()));
+    timer->start(1000);
+bar->hide();//DOESNT WORK
+}
+
+void MainWindow::updateProgBar(){
+
+    if(counter <= 100)
+    {
+        counter++;
+        bar->setValue(counter);
+    }
+    else
+    {
+        timer->stop();
+        delete timer;
+
+
+        ui->tableWidget_1->setIconSize(QSize(60,18));//MIGHT BE UNNECESSARY
+        QTableWidgetItem *icon_item = new QTableWidgetItem;
+        icon_item->setSizeHint(QSize(60,18));
+        icon_item->setIcon(QIcon(":/tick.png"));
+        ui->tableWidget_1->setItem(1, 10, icon_item);
+
+    }
+
 }
