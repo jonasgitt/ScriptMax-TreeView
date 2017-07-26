@@ -1,5 +1,5 @@
-#ifndef RUNOPTIONS_H
-#define RUNOPTIONS_H
+#ifndef SCRIPTLINES_H
+#define SCRIPTLINES_H
 
 #include "sampleform.h"
 #include "sampletable.h"
@@ -33,7 +33,7 @@ public:
     double heightOffsT, uAmpsT;
 
 };
-
+//OpenGenie Strings
 QString writeSamples(QList<NRSample> samples);
 QString writeRun(runstruct &runvars, bool runSM);
 QString writeContrast(runstruct runvars, bool wait);
@@ -42,6 +42,9 @@ QString writeEuro(runstruct runvars);
 QString writeNIMA(runstruct runvars, bool PorA);
 QString writeTransm(runstruct runvars);
 
+//Python Strings
+QString PyContrast(runstruct runvars, bool wait);
 
-#endif // RUNOPTIONS_H
+
+#endif // SCRIPTLINES_H
 

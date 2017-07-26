@@ -7,7 +7,7 @@
 #include <QSignalMapper>
 #include <QTime>
 #include "mainwindow.h"
-#include "runoptions.h"
+#include "ScriptLines.h"
 #include <QApplication>
 
 QString writeSamples(QList<NRSample> samples){
@@ -156,4 +156,13 @@ QString writeTransm(runstruct runvars){
 
     scriptLine += "," + QString::number(runvars.uAmpsT) + ")";
     return scriptLine;
+}
+
+//=================================================================================================================//
+//======================================PYTHON=====================================================================//
+//=================================================================================================================//
+
+QString PyContrast(runstruct runvars, bool wait){
+
+
 }

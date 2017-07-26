@@ -13,27 +13,28 @@
 #include <iostream>
 #include <QHostInfo>
 #include <QDesktopServices>
-#include "runoptions.h"
+#include "ScriptLines.h"
 #include <QFile>
 #include <QTextStream>
 #include <QLineEdit>
 #include <QStandardPaths>
 #include <QSettings>
+#include "pyhighlighter.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->tabWidget->setCurrentIndex(0);
 
     fileName = "";
+    ui->saveButton->setEnabled(false);
 
-    //ui is the name of our MainWindow?
-    highlighter = new Highlighter(ui->plainTextEdit->document());
+    //Script is in OpenGenie at launch
+    ui->OGButton->setChecked(true);
+    OGhighlighter = new Highlighter(ui->plainTextEdit->document());
 
-    //ui->tabWidget->setTabEnabled(2,false);
-
-     ui->saveButton->setEnabled(false);
     initMainTable();
 
 
@@ -49,16 +50,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
-//initializes main table
-//why is the tables QList needed? Isnt there only one table called table_widget_1?
 void MainWindow::initMainTable(){
-    //actions has type qstringlist
+
     actions << " " << "Run" << "Run with SM" << "Kinetic run" << "Run PNR" << "Run PA" \
             << "Free text (OG)"\
             << "--------------"<< "contrastchange" << "Set temperature" << "NIMA" \
             << "--------------"<< "Set Field" << "Run Transmissions";
 
-    //list that stores tables pointers
+
     QList<QTableWidget*> tables = this->findChildren<QTableWidget*>(); //finds all children of type QTableWidget
 
     //save number of rows/cols for the 0th entry in qlist, would probs be main table
@@ -120,18 +119,26 @@ void MainWindow::parseTableSlot(){
 //Writes sample information and all the comments into Genie Script
 void MainWindow::writeBackbone(){
 
+    QString BFileName;
     //Get Backbone from .txt file
-    QFile OGfile(":/OGbackbone.txt");
+    if (ui->OGButton->isChecked())
+        BFileName = ":/OGbackbone.txt";
+    else if (ui->PythonButton->isChecked())
+        BFileName = ":/PyBackbone.txt";
 
-    if (!OGfile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "title","couldn't open OGfile");
+    else ui->plainTextEdit->setPlainText("Neither are checked");
+
+    QFile BFile(BFileName);
+
+    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
+           QMessageBox::warning(this, "Error" , "Couldn't open Backbone File");
     }
 
-    QTextStream in(&OGfile);
+    QTextStream in(&BFile);
     QString OGtext = in.readAll();
     ui->plainTextEdit->setPlainText(OGtext);
 
-    OGfile.close();
+    BFile.close();
 
 
     ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
@@ -139,11 +146,6 @@ void MainWindow::writeBackbone(){
     for (int i=0; i < mySampleForm->sampleList.length(); i++){
         ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1)); // sample numbering starts with 1
     }
-
-
-
-
-
 }
 
 
@@ -1637,4 +1639,17 @@ QStringList MainWindow::searchDashboard(QString instrument){
     return list;
 
 
+}
+
+void MainWindow::on_PythonButton_clicked()
+{
+    pyhighlighter = new KickPythonSyntaxHighlighter(ui->plainTextEdit->document());
+    writeBackbone();
+}
+
+
+void MainWindow::on_OGButton_clicked()
+{
+    OGhighlighter = new Highlighter(ui->plainTextEdit->document());
+    writeBackbone();
 }

@@ -10,6 +10,7 @@
 #include <QSignalMapper>
 #include <QTime>
 #include <QSettings>
+#include "pyhighlighter.h"
 
 
 namespace Ui {
@@ -96,6 +97,10 @@ private slots:
 
     void on_saveButton_clicked();
 
+    void on_PythonButton_clicked();
+
+    void on_OGButton_clicked();
+
 protected slots:
     void onDeviceSelected(int value);
 
@@ -106,7 +111,8 @@ signals:
 private:
     QSignalMapper* signalMapper;
     SampleForm *mySampleForm;
-    Highlighter* highlighter;
+    Highlighter* OGhighlighter;
+    KickPythonSyntaxHighlighter* pyhighlighter;
     bool areyousure();
 
 };

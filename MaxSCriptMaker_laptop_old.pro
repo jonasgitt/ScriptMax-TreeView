@@ -22,14 +22,16 @@ SOURCES += main.cpp\
     sampletable.cpp \
     GCLHighLighter.cpp \
     translator.cpp \
-    runoptions.cpp
+    ScriptLines.cpp \
+    pyhighlighter.cpp
 
 HEADERS  += mainwindow.h \
     sampleform.h \
     sampletable.h \
     GCLHighLighter.h \
     translator.h \
-    runoptions.h
+    ScriptLines.h \
+    pyhighlighter.h
 
 FORMS    += mainwindow.ui \
     sampleform.ui \
