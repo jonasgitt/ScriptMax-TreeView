@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
 
-    initMainTable();
+
     ProgressBar(10, 1);//EVENTUALLY BELONGS SOMEWHERE ELSE
 
     mySampleForm = new SampleForm(); // Be sure to destroy this window somewhere
@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(mySampleForm,SIGNAL(button3Clicked()),this, SLOT(parseTableSlot()));
 
     connect(ui->tableWidget_1,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(parseTableSlot()));
-
+    initMainTable();
     parseTable();
 
 }
@@ -79,6 +79,7 @@ void MainWindow::initMainTable(){
             combo->setProperty("row", r);   //sets the row property to hold row number r
             connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(onRunSelected(int)));
             i++;
+            combo->setDisabled(mySampleForm->sampleList.isEmpty());
         }
         for (int row = 0; row< ROWS; row++){
             for (int col = 1; col< COLS; col++){
@@ -91,6 +92,8 @@ void MainWindow::initMainTable(){
                 table->setItem(row,col,newItem); //puts/replaces an empty cell where the widget was removed
 
             }
+            if (mySampleForm->sampleList.isEmpty())
+                table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         }
         //don't these two commands work against eachother
         table->resizeColumnToContents(0);
@@ -114,12 +117,11 @@ void MainWindow::initMainTable(){
 }
 
 
-//this is identical to parseTable(), which extracts the data from the table
 void MainWindow::parseTableSlot(){
-    parseTable(); //guckt was in der tabelle ausgewaehlt wurde
+    parseTable();
 }
 
-//Writes sample information and all the comments into Genie Script
+
 void MainWindow::writeBackbone(){
 
     QString BFileName;

@@ -99,7 +99,7 @@ private slots:
     void on_saveButton_clicked();
 
     void on_PythonButton_clicked();
-void updateProgBar(int row);
+    void updateProgBar(int row);
     void on_OGButton_clicked();
 
 protected slots:
