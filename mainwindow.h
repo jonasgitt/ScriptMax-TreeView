@@ -99,7 +99,7 @@ private slots:
     void on_saveButton_clicked();
 
     void on_PythonButton_clicked();
-void updateProgBar();
+void updateProgBar(int row);
     void on_OGButton_clicked();
 
 protected slots:
@@ -116,10 +116,10 @@ private:
     KickPythonSyntaxHighlighter* pyhighlighter;
     QTimer *timer;
     QProgressBar *bar;
-    int counter;
+    int counter = 0;
 
     bool areyousure();
-    void ProgressBar();
+    void ProgressBar(int secs, int row);
 
 
 

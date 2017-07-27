@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
 
     initMainTable();
-counter = 90; ProgressBar();
+    ProgressBar(10, 1);//EVENTUALLY BELONGS SOMEWHERE ELSE
 
     mySampleForm = new SampleForm(); // Be sure to destroy this window somewhere
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
@@ -1663,21 +1663,21 @@ void MainWindow::on_OGButton_clicked()
     writeBackbone();
 }
 
-//NEED TO CONFIGURE THIS TO TAKE AN INPUT OF ROW, TIME
-void MainWindow::ProgressBar(){
+
+void MainWindow::ProgressBar(int secs, int row){
 
 
     bar = new QProgressBar();
-    bar->setMinimumSize(73, 18);//need this to fill box
-    ui->tableWidget_1->setCellWidget(1,10,bar);
+    bar->setMinimumSize(73, ui->tableWidget_1->rowHeight(1));//need this to fill box
+    ui->tableWidget_1->setCellWidget(row,10,bar);
 
     timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(updateProgBar()));
-    timer->start(1000);
-bar->hide();//DOESNT WORK
+    connect(timer, SIGNAL(timeout()), this, SLOT(updateProgBar(row)));
+    timer->start(secs*10);
+
 }
 
-void MainWindow::updateProgBar(){
+void MainWindow::updateProgBar(int row){
 
     if(counter <= 100)
     {
@@ -1688,13 +1688,16 @@ void MainWindow::updateProgBar(){
     {
         timer->stop();
         delete timer;
+        ui->tableWidget_1->removeCellWidget(row,10);
 
-
-        ui->tableWidget_1->setIconSize(QSize(60,18));//MIGHT BE UNNECESSARY
+        ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
         QTableWidgetItem *icon_item = new QTableWidgetItem;
-        icon_item->setSizeHint(QSize(60,18));
+
+        for (int col = 1; col < 10; col++)
+               ui->tableWidget_1->item(row,col)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+
         icon_item->setIcon(QIcon(":/tick.png"));
-        ui->tableWidget_1->setItem(1, 10, icon_item);
+        ui->tableWidget_1->setItem(row, 10, icon_item);
 
     }
 
