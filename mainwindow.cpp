@@ -1,6 +1,5 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "sampleform.h"
 #include "sampletable.h"
 #include "GCLHighLighter.h"
 #include "QProcess"
@@ -92,14 +91,16 @@ void MainWindow::initMainTable(){
             if (mySampleForm->sampleList.isEmpty())
                 table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         }
+
         //don't these two commands work against eachother
         table->resizeColumnToContents(0);
         table->setColumnWidth(10,40);
     }
 
-    connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(openSampleForm()));
+    disableRows();
+
     connect(ui->pushButton_3, SIGNAL(clicked()), this, SLOT(openSampleTable()));
-    connect(ui->pushButton_2, SIGNAL(clicked()), this, SLOT(runGenie())); //PLAY BUTTON
+    connect(ui->playButton, SIGNAL(clicked()), this, SLOT(runGenie())); //PLAY BUTTON
     ui->tableWidget_1->setColumnWidth(0,120);
 
     //Shows Context Menu
@@ -112,6 +113,33 @@ void MainWindow::initMainTable(){
     runTime = time;
 
 }
+
+void MainWindow::disableRows(){
+    qDebug() << "Calling";
+    QList<QComboBox*> boxes = ui->tableWidget_1->findChildren<QComboBox*>();
+    bool disable;
+    if (mySampleTable->sampleList.isEmpty()) disable = true;
+    else disable = false;
+
+    for (int row = 0; row < 100; row++){
+        QComboBox *box = boxes[row];
+        box->setDisabled(disable);
+
+        auto currentFlags = ui->tableWidget_1->item(row,10)->flags();
+        ui->tableWidget_1->item(row,10)->setFlags(currentFlags & (~Qt::ItemIsEditable));  //permanently disable column 10 for progressbars
+
+        for (int col = 1; col < 10; col++){
+            currentFlags = ui->tableWidget_1->item(row,col)->flags();
+            if (disable) {
+                ui->tableWidget_1->item(row,col)->setFlags(currentFlags & (~Qt::ItemIsEditable));
+            }
+            else {
+                ui->tableWidget_1->item(row,col)->setFlags(currentFlags | Qt::ItemIsEditable);
+            }
+        }
+    }
+}
+
 
 
 void MainWindow::parseTableSlot(){
@@ -145,7 +173,7 @@ void MainWindow::writeBackbone(){
 
     ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
-    for (int i=0; i < mySampleForm->sampleList.length(); i++){
+    for (int i=0; i < mySampleTable->sampleList.length(); i++){
         ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1)); // sample numbering starts with 1
     }
 }
@@ -182,11 +210,11 @@ void MainWindow::parseTable(){
         {
             case 0:
                 break;
-            case 1: // normal run - extract into void with options for runangle_SM, kinetic etc...
+            case 1:
                 normalRun(row, false);
                 break;
             case 2: // run with supermirror
-                normalRun(row, true);
+               { normalRun(row, true);}
                 break;
             case 3:// run kinetic
                 kineticRun(row);
@@ -195,8 +223,8 @@ void MainWindow::parseTable(){
                 OGcommand(row);
                 break;
             case 8: // contrastChange
-                contrastChange(row);
-                break;
+                {contrastChange(row);
+ qDebug() <<"contrastChange";                break;}
             case 9:// set temperature
                 setTemp(row);
                 break;
@@ -223,7 +251,7 @@ void MainWindow::samplestoPlainTextEdit(){
     ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
-    QList<NRSample> samples = mySampleForm->sampleList;
+    QList<NRSample> samples = mySampleTable->sampleList;
     ui->plainTextEdit->insertPlainText(writeSamples(samples));
 }
 
@@ -233,12 +261,12 @@ void MainWindow::normalRun(int row, bool runSM){
     QComboBox* whichSamp = new QComboBox;
     runstruct runvars;
 
-    if(mySampleForm->sampleList.length()){ //if there is a sample
+    if(mySampleTable->sampleList.length()){ //if there is a sample
 
             whichSamp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-            runvars.sampName = mySampleForm->sampleList[whichSamp->currentIndex()].title;
+            runvars.sampName = mySampleTable->sampleList[whichSamp->currentIndex()].title;
 
-            mySampleForm->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
+            mySampleTable->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
             runvars.subtitle = ui->tableWidget_1->item(row,2)->text();
 
             runvars.sampNum = QString::number(whichSamp->currentIndex()+1);
@@ -320,7 +348,7 @@ void MainWindow::contrastChange(int row){
 
     runvars.flow = (ui->tableWidget_1->item(row,6)->text()).toDouble();
     runvars.volume = (ui->tableWidget_1->item(row,7)->text()).toDouble();
-    runvars.knauer = mySampleForm->sampleList[whichSamp->currentIndex()].knauer;
+    runvars.knauer = mySampleTable->sampleList[whichSamp->currentIndex()].knauer;
 
     if (percentSum != 100 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
         ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
@@ -439,11 +467,11 @@ void MainWindow::runTrans(int row){
     QComboBox* whichSamp = new QComboBox;
     runstruct runvars;
 
-    if(mySampleForm->sampleList.length()){
+    if(mySampleTable->sampleList.length()){
         whichSamp=(QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-        runvars.sampName = mySampleForm->sampleList[whichSamp->currentIndex()].title;
+        runvars.sampName = mySampleTable->sampleList[whichSamp->currentIndex()].title;
 
-        mySampleForm->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
+        mySampleTable->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
         runvars.subtitle = ui->tableWidget_1->item(row,2)->text();
 
         runvars.sampNum = QString::number(whichSamp->currentIndex()+1);
@@ -483,182 +511,31 @@ void MainWindow::updateRunTime(double angle){
     return;
 }
 
-//why is it only displaying one specific sample and not the whole table?
-void MainWindow::openSampleForm()
+
+void MainWindow::openSampleTable()
 {
-    if(mySampleForm->currentSample > 0){
-        mySampleForm->displaySample(mySampleForm->currentSample);
-    }
-    mySampleForm->show();
-   // ...
+//    if(mySampleTable->currentSample > 0){
+        mySampleTable->displaySamples();
+    mySampleTable->show();
+
+
 }
 
-
-void MainWindow::updateSamplesSlot(){
-    bool ok;
-
-    //what do these expressions mean?
-    QRegExp isSum("^[+-]?\\d*\\.?\\d*([+-]\\d*\\.?\\d*)?$");
-    QRegExp isDouble("^[+-]?[0-9]+([\\,\\.][0-9]+)?$");
-
-    //tableWidget is part of SampleTable
-    for(int row=0; row<mySampleTable->ui->tableWidget->rowCount(); row++){
-        ok = true;
-        // ####### check if it's only edit or new sample!!!!!
-        //if there is already an entry in the list
-        if(row < mySampleForm->sampleList.length()){
-            //if first column is empty
-            if(mySampleTable->ui->tableWidget->item(row,0)->text()=="")
-                ok = false;
-            //if the field does not match isSum exactly
-            if(!isSum.exactMatch(mySampleTable->ui->tableWidget->item(row,3)->text())){
-                ok = false;
-                //make third column empty?
-                mySampleTable->ui->tableWidget->item(row,3)->setText("");
-            }
-            //in every column
-            for(int col=1; col < mySampleTable->ui->tableWidget->columnCount()-1; col++){
-                //what is special about the third column?
-                if(col!=3)
-                    if (!isDouble.exactMatch(mySampleTable->ui->tableWidget->item(row,col)->text())){
-                        ok = false;
-                        mySampleTable->ui->tableWidget->item(row,col)->setText("");
-                        mySampleTable->ui->tableWidget->setCurrentCell(row,col);
-                    }                
-            }
-            //add: check if translation values are the same...
-
-            //the above checked if a cell was empty or of the wrong type
-            //if input was ok save the inputted data in the samplelist
-            if (ok){
-                mySampleForm->sampleList[row].title = mySampleTable->ui->tableWidget->item(row,0)->text();
-                mySampleForm->sampleList[row].translation = mySampleTable->ui->tableWidget->item(row,1)->text().toDouble();
-                mySampleForm->sampleList[row].height = mySampleTable->ui->tableWidget->item(row,2)->text().toDouble();
-                mySampleForm->sampleList[row].phi_offset = mySampleTable->ui->tableWidget->item(row,3)->text();
-                mySampleForm->sampleList[row].footprint = mySampleTable->ui->tableWidget->item(row,4)->text().toDouble();
-                mySampleForm->sampleList[row].resolution = mySampleTable->ui->tableWidget->item(row,5)->text().toDouble();
-                mySampleForm->sampleList[row].s3 = mySampleTable->ui->tableWidget->item(row,6)->text().toDouble();
-                mySampleForm->sampleList[row].s4 = mySampleTable->ui->tableWidget->item(row,7)->text().toDouble();
-                mySampleForm->sampleList[row].knauer = mySampleTable->ui->tableWidget->item(row,8)->text().toDouble();
-            }else {
-                QMessageBox msgBox;
-                msgBox.setIcon(QMessageBox::Warning);
-                msgBox.setText("One or more values are missing, of the wrong type or duplicates (e.g. translation or switch!");
-                msgBox.exec();
-            }
-        }
-         //if a new sample is being created
-         else {
-            if(mySampleTable->ui->tableWidget->item(row,0)->text()=="")
-                ok = false;
-            if(!isSum.exactMatch(mySampleTable->ui->tableWidget->item(row,3)->text())){
-                ok = false;
-                mySampleTable->ui->tableWidget->item(row,3)->setText("");
-            }
-            for(int col=1; col < mySampleTable->ui->tableWidget->columnCount(); col++){
-                if(col!=3)
-                    if (!isDouble.exactMatch(mySampleTable->ui->tableWidget->item(row,col)->text())){
-                        ok = false;
-                        mySampleTable->ui->tableWidget->item(row,col)->setText("");
-                        //mySampleTable->ui->tableWidget->setCurrentCell(row,col);
-                    }
-            }
-            if (ok){ // create new smaple in sampleList
-                NRSample newSample;
-
-                newSample.title = mySampleTable->ui->tableWidget->item(row,0)->text();
-                newSample.translation = mySampleTable->ui->tableWidget->item(row,1)->text().toDouble();
-                newSample.height = mySampleTable->ui->tableWidget->item(row,2)->text().toDouble();
-                newSample.phi_offset = mySampleTable->ui->tableWidget->item(row,3)->text();
-                newSample.footprint = mySampleTable->ui->tableWidget->item(row,4)->text().toDouble();
-                newSample.resolution = mySampleTable->ui->tableWidget->item(row,5)->text().toDouble();
-                newSample.s3 = mySampleTable->ui->tableWidget->item(row,6)->text().toDouble();
-                newSample.s4 = mySampleTable->ui->tableWidget->item(row,7)->text().toDouble();
-                newSample.knauer = mySampleTable->ui->tableWidget->item(row,8)->text().toDouble();
-                mySampleForm->sampleList.append(newSample);
-                if(mySampleForm->sampleList.length() == 1){
-                    mySampleForm->displaySample(0);
-                    mySampleForm->currentSample = 0;
-                }
-
-            }
-        }
-    }
-    parseTable();
-
-}
 
 
 void MainWindow::updateSubtitleSlot(){
     /*QComboBox *comb = (QComboBox *)sender();
     int nRow = comb->property("row").toInt();
-    ui->tableWidget_1->item(nRow,2)->setText(mySampleForm->sampleList[comb->currentIndex()].subtitle);
+    ui->tableWidget_1->item(nRow,2)->setText(mySampleTable->sampleList[comb->currentIndex()].subtitle);
     */
     parseTable();
 }
 
 
-//reads from table and stores in mysampleform
-void MainWindow::openSampleTable()
-{
-    //mySampleTable = new SampleTable();
-    // initialize table
-    for (int row = mySampleForm->sampleList.length(); row< mySampleTable->ui->tableWidget->rowCount(); row++){
-        for (int col = 0; col< mySampleTable->ui->tableWidget->columnCount(); col++){
-            QTableWidgetItem *newItem = new QTableWidgetItem;
-            newItem->setText("");
-            mySampleTable->ui->tableWidget->setItem(row,col,newItem);
-
-        }
-    }
-
-    for (int i=0; i < mySampleForm->sampleList.length(); i++){
-        mySampleTable->ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem("S"+QString::number(i+1)));
-
-        QTableWidgetItem *title = new QTableWidgetItem;
-        title->setText(mySampleForm->sampleList[i].title);
-        mySampleTable->ui->tableWidget->setItem(i,0,title);
-
-        QTableWidgetItem *trans = new QTableWidgetItem;
-        trans->setText(QString::number(mySampleForm->sampleList[i].translation));
-        mySampleTable->ui->tableWidget->setItem(i,1,trans);
-
-        QTableWidgetItem *height = new QTableWidgetItem;
-        height->setText(QString::number(mySampleForm->sampleList[i].height));
-        mySampleTable->ui->tableWidget->setItem(i,2,height);
-
-        QTableWidgetItem *phioff = new QTableWidgetItem;
-        phioff->setText(mySampleForm->sampleList[i].phi_offset);
-        mySampleTable->ui->tableWidget->setItem(i,3,phioff);
-
-        QTableWidgetItem *footprint = new QTableWidgetItem;
-        footprint->setText(QString::number(mySampleForm->sampleList[i].footprint));
-        mySampleTable->ui->tableWidget->setItem(i,4,footprint);
-
-        QTableWidgetItem *res = new QTableWidgetItem;
-        res->setText(QString::number(mySampleForm->sampleList[i].resolution));
-        mySampleTable->ui->tableWidget->setItem(i,5,res);
-
-        QTableWidgetItem *s3 = new QTableWidgetItem;
-        s3->setText(QString::number(mySampleForm->sampleList[i].s3));
-        mySampleTable->ui->tableWidget->setItem(i,6,s3);
-
-        QTableWidgetItem *s4 = new QTableWidgetItem;
-        s4->setText(QString::number(mySampleForm->sampleList[i].s4));
-        mySampleTable->ui->tableWidget->setItem(i,7,s4);
-
-        QTableWidgetItem *knauer = new QTableWidgetItem;
-        knauer->setText(QString::number(mySampleForm->sampleList[i].knauer));
-        mySampleTable->ui->tableWidget->setItem(i,8,knauer);
-    }
-    connect(mySampleTable->ui->tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(updateSamplesSlot()));
-    mySampleTable->show();
-   // ...
-}
 
 //changes the table when we select run, run transmissions, contrast change
 void MainWindow::setHeaders(int which){
-    switch (which) {
+      switch (which) {
     case 0: // empty
         for(int i=2; i<12; i++){
             ui->tableWidget_1->setHorizontalHeaderItem(i-1,new QTableWidgetItem(QString::number(i)));
@@ -797,8 +674,8 @@ void  MainWindow::onRunSelected(int value)
     QComboBox* samplesCombo = new QComboBox();
     QString s;
     samples.clear();
-    for (int i=0;i<mySampleForm->sampleList.length();i++){
-        s = mySampleForm->sampleList[i].title;
+    for (int i=0;i<mySampleTable->sampleList.length();i++){
+        s = mySampleTable->sampleList[i].title;
         samples << s;
     }
 
@@ -817,12 +694,12 @@ void  MainWindow::onRunSelected(int value)
     switch(value)
     {
     case 1: // run
-            if(mySampleForm->sampleList.length()){
+            if(mySampleTable->sampleList.length()){
                 setHeaders(1);
                 comb->setStyleSheet("QComboBox { background-color: lightGreen; }");
                 tabl->removeCellWidget(nRow,1);
                 tabl->setCellWidget (nRow, 1, samplesCombo);
-                tabl->item(nRow,2)->setText(mySampleForm->sampleList[samplesCombo->currentIndex()].subtitle);
+                tabl->item(nRow,2)->setText(mySampleTable->sampleList[samplesCombo->currentIndex()].subtitle);
                 tabl->item(nRow,2)->setToolTip("Subtitle");
                 tabl->item(nRow,3)->setText("Angle 1");
                 tabl->item(nRow,3)->setToolTip("Angle 1");
@@ -849,7 +726,7 @@ void  MainWindow::onRunSelected(int value)
             comb->setStyleSheet("QComboBox { background-color: lightGreen; }");
             tabl->removeCellWidget(nRow,1);
             tabl->setCellWidget (nRow, 1, samplesCombo);
-            tabl->item(nRow,2)->setText(mySampleForm->sampleList[samplesCombo->currentIndex()].subtitle);
+            tabl->item(nRow,2)->setText(mySampleTable->sampleList[samplesCombo->currentIndex()].subtitle);
             tabl->item(nRow,2)->setToolTip("Subtitle");
             tabl->item(nRow,3)->setText("Angle 1");
             tabl->item(nRow,3)->setToolTip("Angle 1");
@@ -1049,40 +926,6 @@ void MainWindow::on_actionCut_triggered()
 
 
 
-
-
-//checkbox2 is "use actual SE actions" on interface. If clicked, Temperature Options disappear from Run Options Combo Box
-void MainWindow::on_checkBox_2_clicked(bool checked)
-{
-    QStringList list;
-    QStringList newActions;
-    list = searchDashboard(ui->instrumentCombo->currentText());
-
-    //creates the combo box on the mainwindow containing run options
-    //only difference between this and initmaintable (line 50) is the temperature options are missing
-    if (checked){
-        newActions << " " << "Run" << "Run with SM" << "Kinetic run" << "Run PNR" << "Run PA" \
-                << "Free text (OG)"\
-                << "--------------"<< list \
-                << "--------------"<< "Set Field" << "Run Transmissions";
-       // QList<QComboBox*> combo = ;
-        for (int r = 0; r < ui->tableWidget_1->rowCount(); r++) {
-            QComboBox* box = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(r,0));
-            box->clear();
-            box->addItems(newActions);
-        }
-
-    } else {
-        for (int row = 0; row < ui->tableWidget_1->rowCount(); row++) {
-            QComboBox* box = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,0));
-            box->clear();
-            box->addItems(actions); //actions is a QStringList also used in line 50 that standard run options are written to
-        }
-    }
-}
-
-
-
 //??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
 void MainWindow::on_actionOpen_Script_triggered()
 {
@@ -1114,7 +957,7 @@ void MainWindow::on_actionOpen_Script_triggered()
         for(int l=1; l < tableStart; l++){
             sampleParameters = line[l].split(','); //sampleParameters stores the parameters that are listed at the start of line Qstring
             if (sampleParameters.length() == 9){   //these parameters are then passed to a NRSample struct
-                mySampleForm->currentSample = l-1;
+                mySampleTable->currentSample = l-1;
                 NRSample newSample;
                 newSample.title = sampleParameters[0];
                 newSample.translation = sampleParameters[1].toDouble();
@@ -1125,7 +968,7 @@ void MainWindow::on_actionOpen_Script_triggered()
                 newSample.s3 = sampleParameters[6].toDouble();
                 newSample.s4 = sampleParameters[7].toDouble();
                 newSample.knauer = sampleParameters[8].toInt();
-                mySampleForm->sampleList.append(newSample);
+                mySampleTable->sampleList.append(newSample);
             } else {
                 // pop up some error message
             }
@@ -1209,7 +1052,7 @@ void MainWindow::on_actionNew_Script_triggered()
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete mySampleForm;
+    delete mySampleTable;
 }
 
 //Quits Program
@@ -1283,7 +1126,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 bool MainWindow::areyousure()
 {
-    if (ui->checkBox->isChecked() || mySampleForm->sampleList.isEmpty())
+    if (ui->checkBox->isChecked() || mySampleTable->sampleList.isEmpty())
         return true;
     const QMessageBox::StandardButton ret
         = QMessageBox::warning(this, tr("Application"),
@@ -1416,16 +1259,16 @@ void MainWindow::on_actionSave_Script_triggered()
             //================================================
             QTextStream out(&file);
             out << "#SAMPLES title, translation, height, phi_offset, footprint, resolution, s3, s4\n";
-            for(int i = 0; i < mySampleForm->sampleList.length(); i++){
-                out << mySampleForm->sampleList[i].title << ",";
-                out << QString::number(mySampleForm->sampleList[i].translation) << ",";
-                out << QString::number(mySampleForm->sampleList[i].height) << ",";
-                out << mySampleForm->sampleList[i].phi_offset << ",";
-                out << QString::number(mySampleForm->sampleList[i].footprint) << ",";
-                out << QString::number(mySampleForm->sampleList[i].resolution) << ",";
-                out << QString::number(mySampleForm->sampleList[i].s3) << ",";
-                out << QString::number(mySampleForm->sampleList[i].s4) << ",";
-                out << QString::number(mySampleForm->sampleList[i].knauer) << "\n";
+            for(int i = 0; i < mySampleTable->sampleList.length(); i++){
+                out << mySampleTable->sampleList[i].title << ",";
+                out << QString::number(mySampleTable->sampleList[i].translation) << ",";
+                out << QString::number(mySampleTable->sampleList[i].height) << ",";
+                out << mySampleTable->sampleList[i].phi_offset << ",";
+                out << QString::number(mySampleTable->sampleList[i].footprint) << ",";
+                out << QString::number(mySampleTable->sampleList[i].resolution) << ",";
+                out << QString::number(mySampleTable->sampleList[i].s3) << ",";
+                out << QString::number(mySampleTable->sampleList[i].s4) << ",";
+                out << QString::number(mySampleTable->sampleList[i].knauer) << "\n";
             }
             out << "#TABLE\n";
             for(int row = 0; row < ui->tableWidget_1->rowCount(); row++){
@@ -1631,23 +1474,6 @@ void MainWindow::on_OGcmd_pushButton_clicked()
 }
 */
 
-//searches web dashboard for SE options
-QStringList MainWindow::searchDashboard(QString instrument){
-
-    //these are unused as of now. QRegExp is usually used for searching, validating
-    QRegExp groups("<span style=\"font-weight:bold;\">([a-zA-Z0-9 ]+)</span>");
-    QRegExp blocks("<li>([a-zA-Z0-9 _]+):");
-
-    QStringList list;
-    QStringList list2;
-
-   //accidently removed a line
-
-    //qWarning() << list;
-    return list;
-
-
-}
 
 void MainWindow::on_PythonButton_clicked()
 {
@@ -1691,9 +1517,6 @@ void MainWindow::updateProgBar(int row){
 
         ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
         QTableWidgetItem *icon_item = new QTableWidgetItem;
-
-        for (int col = 1; col < 10; col++)
-               ui->tableWidget_1->item(row,col)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
 
         icon_item->setIcon(QIcon(":/tick.png"));
         ui->tableWidget_1->setItem(row, 10, icon_item);

@@ -18,7 +18,6 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-       sampleform.cpp \
     sampletable.cpp \
     GCLHighLighter.cpp \
     translator.cpp \
@@ -26,7 +25,6 @@ SOURCES += main.cpp\
     pyhighlighter.cpp
 
 HEADERS  += mainwindow.h \
-    sampleform.h \
     sampletable.h \
     GCLHighLighter.h \
     translator.h \
@@ -34,7 +32,6 @@ HEADERS  += mainwindow.h \
     pyhighlighter.h
 
 FORMS    += mainwindow.ui \
-    sampleform.ui \
     sampletable.ui
 
 RESOURCES += \
@@ -50,4 +47,8 @@ else:unix|win32: LIBS += -L$$PWD/ -lgeniedll
 INCLUDEPATH += $$PWD/include
 DEPENDPATH += $$PWD/include
 
-DISTFILES +=
+DISTFILES += \
+    SampTable.ui.qml \
+    SampTable.qml \
+    KkkForm.ui.qml \
+    Kkk.qml

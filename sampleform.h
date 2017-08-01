@@ -1,5 +1,5 @@
 
-
+/*
 #ifndef SAMPLEFORM_H //checks if a flag has been set. these are known as flags btw
 #define SAMPLEFORM_H
 
@@ -26,10 +26,9 @@ public:
     double s4;
 };
 
-//sampleForm is the new class which inherits all the properties of QWidget
 class SampleForm : public QWidget
 {
-    Q_OBJECT //a macro that always needs to be there if we create a class containing signals and slots
+    Q_OBJECT
 
 public:
     QStringList samples;
@@ -50,7 +49,8 @@ public slots:
     void nextSample();
 
 private:
-    Ui::SampleForm *ui; //defines a pointer at ui that is very often used in sampleform.cpp
+    Ui::SampleForm *ui;
 };
 
 #endif // SAMPLEFORM_H
+*/

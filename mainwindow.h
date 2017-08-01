@@ -57,7 +57,6 @@ public:
 
 
 
-
 public slots:
     void parseTableSlot();
     void on_actionCopy_triggered();
@@ -65,15 +64,13 @@ public slots:
     void on_actionDelete_triggered();
     void on_actionCut_triggered();
     void ShowContextMenu(const QPoint& pos);
-    QStringList searchDashboard(QString path);
+    void disableRows();
 
 
 
 private slots:
     void initMainTable();
-    void openSampleForm();
     void openSampleTable();
-    void updateSamplesSlot();
     void updateSubtitleSlot();
     void runGenie();
     void setHeaders(int which);
@@ -81,7 +78,6 @@ private slots:
     void onModeSelected(int value);
     void runControl(int value);
     void on_checkBox_clicked(bool checked);
-    void on_checkBox_2_clicked(bool checked);
     void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
     void on_actionOpen_Script_triggered();
@@ -111,7 +107,7 @@ signals:
 
 private:
     QSignalMapper* signalMapper;
-    SampleForm *mySampleForm;
+    //SampleForm *mySampleForm;
     Highlighter* OGhighlighter;
     KickPythonSyntaxHighlighter* pyhighlighter;
     QTimer *timer;
