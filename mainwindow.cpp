@@ -38,20 +38,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
 
-
+    mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
+    initMainTable();
     ProgressBar(10, 1);//EVENTUALLY BELONGS SOMEWHERE ELSE
 
-    mySampleForm = new SampleForm(); // Be sure to destroy this window somewhere
-    mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
-
-    //on sampleform
-    connect(mySampleForm,SIGNAL(button3Clicked()),this, SLOT(parseTableSlot()));
-
     connect(ui->tableWidget_1,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(parseTableSlot()));
-    initMainTable();
+    connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(disableRows()));
+
     parseTable();
 
 }
+
 
 void MainWindow::initMainTable(){
 
