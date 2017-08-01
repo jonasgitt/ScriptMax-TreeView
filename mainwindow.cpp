@@ -97,7 +97,7 @@ void MainWindow::initMainTable(){
     disableRows();
 
     connect(ui->pushButton_3, SIGNAL(clicked()), this, SLOT(openSampleTable()));
-    connect(ui->pushButton_2, SIGNAL(clicked()), this, SLOT(runGenie())); //PLAY BUTTON
+    connect(ui->playButton, SIGNAL(clicked()), this, SLOT(runGenie())); //PLAY BUTTON
     ui->tableWidget_1->setColumnWidth(0,120);
 
     //Shows Context Menu
@@ -1515,8 +1515,6 @@ void MainWindow::updateProgBar(int row){
 
         ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
         QTableWidgetItem *icon_item = new QTableWidgetItem;
-
-        //disableRows(row);
 
         icon_item->setIcon(QIcon(":/tick.png"));
         ui->tableWidget_1->setItem(row, 10, icon_item);
