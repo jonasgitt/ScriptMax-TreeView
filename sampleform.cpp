@@ -1,3 +1,4 @@
+/*
 #include "sampleform.h"
 #include "ui_sampleform.h"
 #include <QMainWindow>
@@ -119,3 +120,4 @@ SampleForm::~SampleForm()
 {
     delete ui;
 }
+*/

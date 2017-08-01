@@ -1,13 +1,22 @@
 #include "sampletable.h"
-#include "sampleform.h"
 #include "ui_sampletable.h"
 #include <QClipboard>
+#include <QTableWidgetItem>
+#include <QTableWidget>
+#include <QMessageBox>
+#include <QMainWindow>
+#include "qmainwindow.h"
+#include <QDebug>
+#include <mainwindow.h>
+#include <QCloseEvent>
 
 SampleTable::SampleTable(QMainWindow *parent) :
     QMainWindow(parent),
-    ui(new Ui::SampleTable) //"new" has something to do with how memory is allocated
+    ui(new Ui::SampleTable)
 {
     ui->setupUi(this);
+
+    //is this really needed??
     for (int row = 0; row< ui->tableWidget->rowCount(); row++){
         for (int col = 1; col< ui->tableWidget->columnCount(); col++){
              QTableWidgetItem *newItem = new QTableWidgetItem;
@@ -18,14 +27,159 @@ SampleTable::SampleTable(QMainWindow *parent) :
     }
 }
 
-void SampleTable::fillTable(){
-    /*for (int i=0; i < mySampleForm->sampleList.length(); i++){
-        ui->tableWidget->item(0,0)->setText("TEST");
-    }*/
 
+
+void SampleTable::displaySamples(){
+    // initialize table
+    for (int row = sampleList.length(); row<   ui->tableWidget->rowCount(); row++){
+        for (int col = 0; col<   ui->tableWidget->columnCount(); col++){
+            QTableWidgetItem *newItem = new QTableWidgetItem;
+            newItem->setText("");
+              ui->tableWidget->setItem(row,col,newItem);
+
+        }
+    }
+
+    for (int i=0; i <  sampleList.length(); i++){
+          ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem("S"+QString::number(i+1)));
+
+        QTableWidgetItem *title = new QTableWidgetItem;
+        title->setText( sampleList[i].title);
+        ui->tableWidget->setItem(i,0,title);
+
+        QTableWidgetItem *trans = new QTableWidgetItem;
+        trans->setText(QString::number( sampleList[i].translation));
+         ui->tableWidget->setItem(i,1,trans);
+
+        QTableWidgetItem *height = new QTableWidgetItem;
+        height->setText(QString::number(sampleList[i].height));
+         ui->tableWidget->setItem(i,2,height);
+
+        QTableWidgetItem *phioff = new QTableWidgetItem;
+        phioff->setText(sampleList[i].phi_offset);
+        ui->tableWidget->setItem(i,3,phioff);
+
+        QTableWidgetItem *footprint = new QTableWidgetItem;
+        footprint->setText(QString::number(sampleList[i].footprint));
+        ui->tableWidget->setItem(i,4,footprint);
+
+        QTableWidgetItem *res = new QTableWidgetItem;
+        res->setText(QString::number(sampleList[i].resolution));
+          ui->tableWidget->setItem(i,5,res);
+
+        QTableWidgetItem *s3 = new QTableWidgetItem;
+        s3->setText(QString::number(sampleList[i].s3));
+          ui->tableWidget->setItem(i,6,s3);
+
+        QTableWidgetItem *s4 = new QTableWidgetItem;
+        s4->setText(QString::number(sampleList[i].s4));
+          ui->tableWidget->setItem(i,7,s4);
+
+        QTableWidgetItem *knauer = new QTableWidgetItem;
+        knauer->setText(QString::number(sampleList[i].knauer));
+          ui->tableWidget->setItem(i,8,knauer);
+    }
+    connect(ui->tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(updateSamplesSlot()));
 }
 
+void SampleTable::updateSamplesSlot(){
+    bool ok;
 
+    QRegExp isSum("^[+-]?\\d*\\.?\\d*([+-]\\d*\\.?\\d*)?$");
+    QRegExp isDouble("^[+-]?[0-9]+([\\,\\.][0-9]+)?$");
+
+    //tableWidget is part of SampleTable
+    for(int row=0; row< ui->tableWidget->rowCount(); row++){
+        ok = true;
+
+        //if there is already an entry in the list
+        if(row < sampleList.length()){ qDebug() << "filling table with old samples";
+                //if first column is empty
+                if( ui->tableWidget->item(row,0)->text()=="")
+                    ok = false;
+
+                if(!isSum.exactMatch( ui->tableWidget->item(row,3)->text())){
+                    ok = false;
+                     ui->tableWidget->item(row,3)->setText("");
+                }
+
+                for(int col=1; col <  ui->tableWidget->columnCount()-1; col++){
+                    //what is special about the third column?
+                    if(col!=3)
+                        if (!isDouble.exactMatch( ui->tableWidget->item(row,col)->text())){
+                            ok = false;
+                             ui->tableWidget->item(row,col)->setText("");
+                             ui->tableWidget->setCurrentCell(row,col);
+                        }
+                }
+
+
+                //the above checked if a cell was empty or of the wrong type
+                //if input was ok save the inputted data in the samplelist
+                if (ok){ qDebug()<< "success";
+                    sampleList[row].title =  ui->tableWidget->item(row,0)->text();
+                    sampleList[row].translation =  ui->tableWidget->item(row,1)->text().toDouble();
+                    sampleList[row].height =  ui->tableWidget->item(row,2)->text().toDouble();
+                    sampleList[row].phi_offset =  ui->tableWidget->item(row,3)->text();
+                    sampleList[row].footprint =  ui->tableWidget->item(row,4)->text().toDouble();
+                    sampleList[row].resolution =  ui->tableWidget->item(row,5)->text().toDouble();
+                    sampleList[row].s3 =  ui->tableWidget->item(row,6)->text().toDouble();
+                    sampleList[row].s4 =  ui->tableWidget->item(row,7)->text().toDouble();
+                    sampleList[row].knauer =  ui->tableWidget->item(row,8)->text().toDouble();
+                }else {
+                    QMessageBox msgBox;
+                    msgBox.setIcon(QMessageBox::Warning);
+                    msgBox.setText("One or more values are missing, of the wrong type or duplicates (e.g. translation or switch!");
+                    msgBox.exec();
+                }
+        }
+         //if a new sample is being created
+         else {
+                if( ui->tableWidget->item(row,0)->text()==""){//only create sample if it has name
+                    ok = false;}
+                if(!isSum.exactMatch( ui->tableWidget->item(row,3)->text())){
+                    ok = false;qDebug() << "not exact match";
+                     ui->tableWidget->item(row,3)->setText("");
+                }
+                for(int col=1; col <  ui->tableWidget->columnCount(); col++){
+                    if(col!=3)
+                        if (!isDouble.exactMatch( ui->tableWidget->item(row,col)->text())){
+                            ok = false;
+                             ui->tableWidget->item(row,col)->setText("");
+                            // ui->tableWidget->setCurrentCell(row,col);
+                        }
+                }
+                if (ok){ // create new smaple in sampleList
+                    NRSample newSample;
+qDebug() << "creating new sample";
+                    newSample.title =  ui->tableWidget->item(row,0)->text();
+                    newSample.translation =  ui->tableWidget->item(row,1)->text().toDouble();
+                    newSample.height =  ui->tableWidget->item(row,2)->text().toDouble();
+                    newSample.phi_offset =  ui->tableWidget->item(row,3)->text();
+                    newSample.footprint =  ui->tableWidget->item(row,4)->text().toDouble();
+                    newSample.resolution =  ui->tableWidget->item(row,5)->text().toDouble();
+                    newSample.s3 =  ui->tableWidget->item(row,6)->text().toDouble();
+                    newSample.s4 =  ui->tableWidget->item(row,7)->text().toDouble();
+                    newSample.knauer =  ui->tableWidget->item(row,8)->text().toDouble();
+                    sampleList.append(newSample);
+                    if(sampleList.length() == 1){
+                        //displaySample(0);
+                        currentSample = 0;
+                    }
+
+            }
+        }
+    }
+
+}
+void SampleTable::closeEvent(QCloseEvent *event)
+{
+    emit closedSampWindow();
+}
+
+void SampleTable::emit_closeSignal(){
+
+}
 
 QTableWidgetSelectionRange SampleTable::selectedRange() const
 {

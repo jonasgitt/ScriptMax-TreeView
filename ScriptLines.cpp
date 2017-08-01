@@ -10,6 +10,7 @@
 #include "ScriptLines.h"
 #include <QApplication>
 
+#include <QDebug>
 QString writeSamples(QList<NRSample> samples){
 
     QString scriptLine;
@@ -70,10 +71,12 @@ QString writeRun(runstruct &runvars, bool runSM){
     QString scriptLine;
 
     if (runSM){
+        scriptLine += "# " + runvars.sampName + ":\n";
+        scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
         for (int i = 0; i < 3; i++){
             scriptLine += "runTime = runAngle_SM(s";
-            scriptLine = "# " + runvars.sampName + ":\n";
-            scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
+            scriptLine += runvars.sampNum + "," + QString::number(runvars.angles[i]);
+            scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
         }
     }
     else{
