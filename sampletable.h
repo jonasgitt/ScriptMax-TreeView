@@ -29,6 +29,8 @@ public:
 class SampleTable : public QMainWindow
 {
     Q_OBJECT
+
+
 protected:
     void closeEvent(QCloseEvent *event) override;
     
@@ -57,6 +59,8 @@ private:
     void emit_closeSignal();
 signals:
     void closedSampWindow();
+private slots:
+    void on_actionSave_and_Close_triggered();
 };
 
 #endif // SAMPLETABLE_H

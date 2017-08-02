@@ -22,7 +22,8 @@ class MainWindow; //variables included in the namespace
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+const bool PYTHON = true;
+const bool OPENGENIE = false;
 protected:
     void closeEvent(QCloseEvent *event) override;
     
@@ -35,9 +36,10 @@ public:
     SampleTable *mySampleTable;
     QTime runTime;
     QTableWidgetSelectionRange selectedRange() const;
-    void save();
+    void save(bool OGorPy);
     void parseTable();
     void writeBackbone();
+    void pyWriteBackbone();
     QString makeLine(QString action, QStringList args);
     ~MainWindow();
 
@@ -72,12 +74,11 @@ private slots:
     void initMainTable();
     void openSampleTable();
     void updateSubtitleSlot();
-    void runGenie();
     void setHeaders(int which);
     void onRunSelected(int value);
     void onModeSelected(int value);
     void runControl(int value);
-    void on_checkBox_clicked(bool checked);
+    void on_checkBox_clicked();
     void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
     void on_actionOpen_Script_triggered();
@@ -98,6 +99,12 @@ private slots:
     void updateProgBar(int row);
     void on_OGButton_clicked();
 
+    void on_PySaveCheckBox_clicked();
+
+    void on_PyToolButton_clicked();
+
+    void on_PySaveButton_clicked();
+
 protected slots:
     void onDeviceSelected(int value);
 
@@ -116,12 +123,13 @@ private:
 
     bool areyousure();
     void ProgressBar(int secs, int row);
+    void SaveToolButtons(bool OGorPy);
 
 
 
 };
 
 void saveSettings (const QString &key, const QVariant &value, const QString &group);
-QVariant loadSettings(const QString &key, const QVariant &defaultValue, const QString &group);
+QVariant loadSettings();
 
 #endif // MAINWINDOW_H

@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //Script is in OpenGenie at launch
     ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
+    pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
 
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
     initMainTable();
@@ -75,7 +76,7 @@ void MainWindow::initMainTable(){
             combo->setProperty("row", r);   //sets the row property to hold row number r
             connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(onRunSelected(int)));
             i++;
-            combo->setDisabled(mySampleForm->sampleList.isEmpty());
+            combo->setDisabled(mySampleTable->sampleList.isEmpty());
         }
         for (int row = 0; row< ROWS; row++){
             for (int col = 1; col< COLS; col++){
@@ -88,8 +89,6 @@ void MainWindow::initMainTable(){
                 table->setItem(row,col,newItem); //puts/replaces an empty cell where the widget was removed
 
             }
-            if (mySampleForm->sampleList.isEmpty())
-                table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         }
 
         //don't these two commands work against eachother
@@ -115,7 +114,7 @@ void MainWindow::initMainTable(){
 }
 
 void MainWindow::disableRows(){
-    qDebug() << "Calling";
+
     QList<QComboBox*> boxes = ui->tableWidget_1->findChildren<QComboBox*>();
     bool disable;
     if (mySampleTable->sampleList.isEmpty()) disable = true;
@@ -149,6 +148,9 @@ void MainWindow::parseTableSlot(){
 
 void MainWindow::writeBackbone(){
 
+    ui->plainTextEdit->clear();
+    pyWriteBackbone();
+
     QString BFileName;
     //Get Backbone from .txt file
     if (ui->OGButton->isChecked())
@@ -156,12 +158,10 @@ void MainWindow::writeBackbone(){
     else if (ui->PythonButton->isChecked())
         BFileName = ":/PyBackbone.txt";
 
-    else ui->plainTextEdit->setPlainText("Neither are checked");
-
     QFile BFile(BFileName);
 
     if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open Backbone File");
+           QMessageBox::warning(this, "Error" , "Couldn't open OpenGenie Backbone File");
     }
 
     QTextStream in(&BFile);
@@ -178,6 +178,27 @@ void MainWindow::writeBackbone(){
     }
 }
 
+void MainWindow::pyWriteBackbone(){
+
+    ui->PyScriptBox->clear();
+    QString BFileName;
+    BFileName = ":/PyBackbone.txt";
+
+    QFile BFile(BFileName);
+
+    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
+           QMessageBox::warning(this, "Error" , "Couldn't open Python Backbone File");
+    }
+
+    QTextStream in(&BFile);
+    QString Pytext = in.readAll();
+    ui->PyScriptBox->setPlainText(Pytext);
+
+    BFile.close();
+
+    ui->PyScriptBox->find("def runscript()"); //positions the cursor to insert instructions
+    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+}
 
 void MainWindow::parseTable(){
 
@@ -196,7 +217,6 @@ void MainWindow::parseTable(){
     runTime = runTime.fromString("00:00", "hh:mm");
 
     // prepare script header
-    ui->plainTextEdit->clear();
     writeBackbone();
 
     ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
@@ -224,7 +244,7 @@ void MainWindow::parseTable(){
                 break;
             case 8: // contrastChange
                 {contrastChange(row);
- qDebug() <<"contrastChange";                break;}
+                break;}
             case 9:// set temperature
                 setTemp(row);
                 break;
@@ -238,9 +258,10 @@ void MainWindow::parseTable(){
     }
     samplestoPlainTextEdit();
     if(ui->checkBox->isChecked()){
-        save();
+        save(OPENGENIE);
     }
-
+    if(ui->PySaveCheckBox->isChecked())
+        save(PYTHON);
 
 }
 //------------------------------------------------------------------------------------------------------------------//
@@ -296,8 +317,10 @@ void MainWindow::normalRun(int row, bool runSM){
             }
         }
 
-    QString scriptText = writeRun(runvars, runSM);
+    QString scriptText;
+    scriptText = writeRun(runvars, runSM, false);
     ui->plainTextEdit->insertPlainText(scriptText);
+    ui->PyScriptBox->insertPlainText(writeRun(runvars, runSM, true));
     return;
 }
 
@@ -325,7 +348,7 @@ void MainWindow::contrastChange(int row){
     int secs;
     double angle1;
     bool ok, wait;
-    QString scriptLine;
+    QString OGscriptLine, PyScriptLine;
     QComboBox* whichSamp = new QComboBox;
     QComboBox* continueRun = new QComboBox;
 
@@ -363,13 +386,16 @@ void MainWindow::contrastChange(int row){
         ui->timeEdit->setTime(runTime.addSecs(secs));//whichSamp->currentIndex()+1)
 
         wait = true;
-        scriptLine = writeContrast(runvars, wait);
+        OGscriptLine = writeContrast(runvars, wait, false);
+        PyScriptLine = writeContrast(runvars, wait, true);
 
     }else {
         wait = false;
-        scriptLine = writeContrast(runvars, wait);
+        OGscriptLine = writeContrast(runvars, wait, false);
+        PyScriptLine = writeContrast(runvars, wait, true);
     }
-    ui->plainTextEdit->insertPlainText(scriptLine + "\n");
+    ui->plainTextEdit->insertPlainText(OGscriptLine + "\n");
+    ui->PyScriptBox->insertPlainText(PyScriptLine + "\n");
     return;
 }
 
@@ -434,29 +460,31 @@ void MainWindow::setTemp(int row){
 
 void MainWindow::setNIMA(int row){
 
-      QString scriptLine;
+      QString OGscriptLine, PyScriptLine;
       QComboBox* box1 = new QComboBox;
-      bool PorA, ok;
+      bool Pressure, ok;
       runstruct runvars;
 
       box1 = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
       ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
 
       if(box1->currentText().contains("Pressure")){
-          PorA = false;
+          Pressure = true;
           runvars.pressure = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
        }
 
       else if (box1->currentText().contains("Area"))
-          PorA = true;
+          Pressure = false;
           runvars.area = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
 
       if (ok) {
-          scriptLine = writeNIMA(runvars, PorA);
+          OGscriptLine = writeNIMA(runvars, Pressure, false);
+          PyScriptLine = writeNIMA(runvars, Pressure, true);
           ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
       }
 
-      ui->plainTextEdit->insertPlainText(scriptLine + "\n");
+      ui->plainTextEdit->insertPlainText(OGscriptLine + "\n");
+      ui->PyScriptBox->insertPlainText(PyScriptLine);
       return;
 }
 
@@ -486,7 +514,10 @@ void MainWindow::runTrans(int row){
         if (ok){
             ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
             updateRunTime(angle2);
-            ui->plainTextEdit->insertPlainText(writeTransm(runvars) + "\n");
+
+            ui->plainTextEdit->insertPlainText(writeTransm(runvars, false) + "\n");
+            ui->PyScriptBox->insertPlainText(writeTransm(runvars, true) + "\n");
+
         } else ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
 
     }
@@ -771,7 +802,7 @@ void  MainWindow::onRunSelected(int value)
             tabl->item(nRow,7)->setText("Volume[mL]");
             tabl->item(nRow,6)->setToolTip("Volume[mL]");
             tabl->setCellWidget (nRow, 8, waitCombo);
-            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(parseTableSlot()));
+            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(Slot()));
             connect(waitCombo, SIGNAL(activated(int)), this, SLOT(parseTableSlot()));
             break;
         case 9: // set temperature
@@ -1151,52 +1182,55 @@ bool MainWindow::areyousure()
 void MainWindow::on_actionSave_GCL_file_triggered()
 {
     if (ui->checkBox->isChecked())
-        save();
+        save(OPENGENIE);
     else{
         ui->checkBox->setChecked(true);
         ui->tabWidget->setCurrentIndex(1);
-        on_checkBox_clicked(true);
+        on_checkBox_clicked();
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
 
 void MainWindow::on_saveButton_clicked()
 {
-    save();
+    save(OPENGENIE);
+}
+void MainWindow::on_PySaveButton_clicked()
+{
+    save(PYTHON);
 }
 
-//used only once, at the end of Parsetable
-void MainWindow::save(){
 
+void MainWindow::save(bool OGorPy){
 
-    //lineEdit is the Save As box,
-    QString fileName = ui->lineEdit->text();
+    QString fileName;
+
+    if (OGorPy == OPENGENIE)
+        fileName = ui->lineEdit->text();
+    else
+        fileName = ui->PySaveLineEdit->text();
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox::warning(this, "Error","Could not save scriptfile.");
     } else {
         QTextStream stream(&file);
-        stream << ui->plainTextEdit->toPlainText();
+        if (OGorPy == OPENGENIE) stream << ui->plainTextEdit->toPlainText();
+        else stream << ui->PyScriptBox->toPlainText();
         stream.flush();
         file.close();
     }
 
 }
 
-
-//Tells the widget if it has been enabled or not in response to status of checkbox
-void MainWindow::on_checkBox_clicked(bool checked)
+void MainWindow::on_checkBox_clicked()
 {
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QDateTime local(QDateTime::currentDateTime());
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm");
+    QString fileLoc = loadSettings().toString();
+    qDebug() << "OGFileLoc" << fileLoc;
+    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
-    if (ui->OGButton->isChecked()) fName += ".gcl";
-    else fName += ".py";
-
-    if (checked){
+    if (ui->checkBox->isChecked()){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
         ui->saveButton->setEnabled(true);
@@ -1208,26 +1242,57 @@ void MainWindow::on_checkBox_clicked(bool checked)
     }
 }
 
-//"..." opens file Dialog
+void MainWindow::on_PySaveCheckBox_clicked()
+{
+    QDateTime local(QDateTime::currentDateTime());
+    QString fileLoc = loadSettings().toString();
+    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".py";
+
+    if (ui->PySaveCheckBox->isChecked()){
+        ui->PySaveLineEdit->setEnabled(true);
+        ui->PyToolButton->setEnabled(true);
+        ui->PySaveButton->setEnabled(true);
+        ui->PySaveLineEdit->setText(fName);
+    } else {
+        ui->PySaveLineEdit->setEnabled(false);
+        ui->PyToolButton->setEnabled(false);
+        ui->PySaveButton->setEnabled(false);
+    }
+
+}
+
 void MainWindow::on_toolButton_clicked()
 {
+    SaveToolButtons(OPENGENIE);
+}
+void MainWindow::on_PyToolButton_clicked()
+{
+    SaveToolButtons(PYTHON);
+}
+
+void MainWindow::SaveToolButtons(bool OGorPy){
+
     QDateTime local(QDateTime::currentDateTime());
     QString timestamp = local.toString("ddMMyy_hhmm");
 
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString lastfileLoc = loadSettings().toString();
 
     QString fName;
-    if (ui->OGButton->isChecked())
+    if (OGorPy == OPENGENIE){
        fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
                         lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
-    else
+        ui->lineEdit->setText(fName);
+    }
+    else{
         fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                                             lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
-    ui->lineEdit->setText(fName);
+                                                lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
+        ui->PySaveLineEdit->setText(fName);
+    }
+
     QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
     saveSettings("lastfileloc", saveloc, "savegroup");
 }
+
 
 void saveSettings(const QString &key, const QVariant &value, const QString &group)
 {
@@ -1237,13 +1302,13 @@ void saveSettings(const QString &key, const QVariant &value, const QString &grou
     settings.endGroup();
 }
 
-QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
+QVariant loadSettings()
 {
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QSettings settings;
-    settings.beginGroup(group);
-    QVariant value = settings.value(key, defaultValue);
-    settings.endGroup();
-    return value;
+    QVariant testloc = settings.value("lastfileloc", defaultLocation);
+
+    return testloc;
 }
 
 //makes document with only the most important infos. Need to delete or more clearly distinguish from save().
@@ -1326,7 +1391,6 @@ void MainWindow::on_actionSave_Script_triggered()
     }
 }
 
-//??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
 void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
@@ -1335,149 +1399,15 @@ void MainWindow::on_actionSave_Script_As_triggered()
     on_actionSave_Script_triggered();
 }
 
-//--------------------------------------------------------------------------------------------------------------------------//
-//--------------------------------------------------------------------------------------------------------------------------//
-//----------------------------------------------NOT IN USE------------------------------------------------------------------//
-//--------------------------------------------------------------------------------------------------------------------------//
-
-//opens genie and hands it the script using GX library
-void MainWindow::runGenie(){
-
-    QString qtStrData;
-    QByteArray inBytes;
-    const char *cStrData;
-
-
-    //-------------------------
-    char    s[256];
-
-    int*    b;
-    int dims[1];
-
-    char bb[5];
-        //float   cc[2];
-        //double  dd[2];
-
-    int ndims = 1;
-    QString itemText = "";
-/*
-    qtStrData = ui->tableWidget_1->item(0,1)->text();
-    inBytes = qtStrData.toUtf8();
-    cStrData = inBytes.constData();
-    GX_ASSIGN_HANDLE(cStrData,"");
-*/
-/*
-    QTableWidgetItem* item = new QTableWidgetItem();
-    item->setIcon(*(new QIcon("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/large_gears.gif")));
-    ui->tableWidget_1->setVerticalHeaderItem(1,item);
-
-    GX_select_source("C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/INTER00025720.raw");
-    GX_get("VV", "SPEC", 0);            // Integer array
-    GX_assign_handle("_a", "printn(VV)");
-    GX_ASSIGN_HANDLE("begin; waitfor seconds=10;abort","");
-    GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
-    GX_ASSIGN_HANDLE("printn rs", "");
-
-
-    while (itemText!="SETUP"){
-        GX_ASSIGN_HANDLE("rs", "GETRUNSTATE()");
-        dims[0] = 256;
-        GX_transfer("rs", "-->", "STRING", s, &ndims, dims );
-        itemText = QString::fromStdString(s);
-        ui->tableWidget_1->item(5,1)->setText(itemText);
-        printf("%s", "waiting...\n");
-    }
-    printf("%s", "FINISHED\n");
-    itemText = QString::fromStdString(s);
-    ui->tableWidget_1->item(5,1)->setText(itemText);
-
-    for(int col=1; col<ui->tableWidget_1->columnCount();++col){
-        ui->tableWidget_1->item(1,col)->setBackground(Qt::Dense4Pattern);
-    }
-    qtStrData = "VV["+ui->tableWidget_1->item(0,1)->text()+"]";
-    inBytes = qtStrData.toUtf8();
-    cStrData = inBytes.constData();
-
-
-    dims[0]=5;
-    ndims=1;
-    GX_transfer("VV", "-->", "INT32[]", bb, &ndims, dims );
-    printf("ARRAY: %c\n", bb[0]);
-    QString txt = QString().sprintf("%c",bb[0]);
-    ui->tableWidget_1->item(3,3)->setText(txt);
-    //-------------------------
-
-
-    QStringList SECIblocks = searchDashboard(ui->instrumentCombo->currentText());
-    ui->comboBox->addItems(SECIblocks);
-
-*/
-
-
-    //GX_ASSIGN_HANDLE(cStrData,"");
-
-    //GX_get("V1", "", 2);            // Integer#
-    //GX_assign_handle("VV=42", "");
-    //GX_GET("VV","",0);
-    //GX_ASSIGN_HANDLE("__th", "printn(VV)");
-    //GX_transfer("VV", "-->", "INT64", &b, 0, 0);
-
-    //ui->tableWidget_1->item(0,8)->setText(QString::number(b));
-
-
-
-    /*
-    QProcess *process = new QProcess(this);
-    //QString file = "%GENIE_DIR%\\tkgenie32.exe -l";
-    save();
-    QString file = "\"C:\\Users\\ktd43279\\Max_tkgenie32.bat\"";
-    process->start(file);
-    //system("start "\"C:\\Program Files (x86)\\CCLRC ISIS Facility\\Open GENIE\\tkgenie32.bat\""");
-    */
-
-
-}
-
-//Customise Commands Field
-/*
-void MainWindow::on_OG_checkBox_stateChanged(int arg1)
-{
-    int handle;
-    switch (arg1){
-        case 0: // unchecked
-            handle = GX_DEACTIVATE_SESSION();
-            break;
-        case 2: // checked
-            // ACTIVATE GENIE SESSION
-            handle = GX_ACTIVATE_SESSION("og",1,1);
-            GX_ASSIGN_HANDLE("ISC_SETUP(\"INTER\")","");
-
-            //GX_ASSIGN_HANDLE("w","get(1,\"C:/Users/ktd43279/Documents/PROGS/MaxSCriptMaker_laptop/INTER00025720.raw\")");
-            //GX_ASSIGN_HANDLE("printn w.y[1]","");
-            break;
-    }
-}
-
-
-void MainWindow::on_OGcmd_pushButton_clicked()
-{
-    QString qtStrData;
-    QByteArray inBytes;
-    const char *cStrData;
-
-
-    qtStrData = ui->OGcmd_lineEdit->text();
-    inBytes = qtStrData.toUtf8();
-    cStrData = inBytes.constData();
-    GX_ASSIGN_HANDLE(cStrData,"");
-
-}
-*/
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+//==================================================SAVE STUFF OVER=====================================================================================================//
+//======================================================================================================================================================================//
+//======================================================================================================================================================================/
 
 
 void MainWindow::on_PythonButton_clicked()
 {
-    pyhighlighter = new KickPythonSyntaxHighlighter(ui->plainTextEdit->document());
+    pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
     writeBackbone();
 }
 
@@ -1524,3 +1454,7 @@ void MainWindow::updateProgBar(int row){
     }
 
 }
+
+
+
+

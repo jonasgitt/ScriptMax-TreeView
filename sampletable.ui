@@ -170,10 +170,11 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionSave_and_Close"/>
    <addaction name="actionCut"/>
    <addaction name="actionCopy"/>
    <addaction name="actionPaste"/>
-   <addaction name="actionDelete"/>
+   <addaction name="actionDeleteRow"/>
   </widget>
   <action name="actionCut">
    <property name="icon">
@@ -213,7 +214,12 @@
     <string>Ctrl+V</string>
    </property>
   </action>
-  <action name="actionDelete">
+  <action name="actionDeleteRow">
+   <property name="icon">
+    <iconset>
+     <normalon>:/delete_row.png</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -225,6 +231,22 @@
    </property>
    <property name="shortcut">
     <string>Del</string>
+   </property>
+  </action>
+  <action name="actionSave_and_Close">
+   <property name="icon">
+    <iconset>
+     <normalon>saveandclose.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Save and Close</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save and Close&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="shortcut">
+    <string>Esc</string>
    </property>
   </action>
  </widget>

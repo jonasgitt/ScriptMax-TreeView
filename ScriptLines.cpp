@@ -66,35 +66,42 @@ QString writeSamples(QList<NRSample> samples){
 }
 
 
-QString writeRun(runstruct &runvars, bool runSM){
+QString writeRun(runstruct &runvars, bool runSM, bool Python){
 
     QString scriptLine;
 
-    if (runSM){
+    if (runSM && !Python){
         scriptLine += "# " + runvars.sampName + ":\n";
         scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
-        for (int i = 0; i < 3; i++){
-            scriptLine += "runTime = runAngle_SM(s";
-            scriptLine += runvars.sampNum + "," + QString::number(runvars.angles[i]);
-            scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
-        }
     }
-    else{
-        for (int i = 0; i < 3; i++){
-            scriptLine += "runTime = runAngle(s";
-            scriptLine += runvars.sampNum + "," + QString::number(runvars.angles[i]);
-            scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
+
+    for (int i = 0; i < 3; i++){
+        if (runSM){
+            if (!Python) scriptLine += "runTime = runAngle_SM(s";
+            else if (Python) scriptLine += "\trunAngle_SM(sample[";
         }
+        else {
+            if (!Python) scriptLine += "runTime = runAngle(s";
+            else if (Python) scriptLine += "\trunAngle(sample[";
+        }
+        scriptLine += runvars.sampNum;
+        if (Python) scriptLine += "]";
+        scriptLine += "," + QString::number(runvars.angles[i]);
+        scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
     }
+
     return scriptLine;
 }
 
-QString writeContrast(runstruct runvars, bool wait){
+QString writeContrast(runstruct runvars, bool wait, bool Python){
 
     QString scriptLine;
 
-    if (wait) scriptLine = "runTime = contrastChange:wait(";
-    else scriptLine = "runTime = contrastChange(";
+    if (!Python) scriptLine  = "runTime = ";
+    else scriptLine = "\t";
+
+    if (wait) scriptLine += "contrastChange:wait(";
+    else scriptLine += "contrastChange(";
 
     scriptLine += QString::number(runvars.knauer) + ", ";
 
@@ -134,25 +141,31 @@ QString writeEuro(runstruct runvars){
     return scriptLine;
 }
 
-QString writeNIMA(runstruct runvars, bool PorA){
+QString writeNIMA(runstruct runvars, bool Pressure, bool Python){
 
     QString scriptLine;
 
-    if (!PorA)
-        scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure);
+    if (Pressure)
+        if (!Python) scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure);
+        else scriptLine = "\tgoToPressure(" + QString::number(runvars.pressure) + ")";
     else
-        scriptLine = "CSET target_area = " + QString::number(runvars.area);
+        if (!Python) scriptLine = "CSET target_area = " + QString::number(runvars.area);
+        else scriptLine = "\tgoToArea(" + QString::number(runvars.area) + ")";
 
     return scriptLine;
 }
 
-QString writeTransm(runstruct runvars){
+QString writeTransm(runstruct runvars, bool Python){
 
     QString scriptLine;
-    scriptLine = "# " + runvars.sampName + "\n";
-    scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
-    scriptLine += "runTime = runTrans(s" + runvars.sampNum;
 
+    if (!Python){
+        scriptLine = "# " + runvars.sampName + "\n";
+        scriptLine += "s" + runvars.sampNum + ".subtitle = \"" + runvars.subtitle + "\"" + "\n";
+        scriptLine += "runTime = runTrans(s" + runvars.sampNum;
+    }
+    else
+        scriptLine = "\ttransmission(sample[" + runvars.sampNum + "] ,\"" + runvars.sampName + "\"";
     for (int i = 0; i < 3; i++){
         scriptLine += "," + QString::number(runvars.angles[i]);
     }
@@ -161,11 +174,3 @@ QString writeTransm(runstruct runvars){
     return scriptLine;
 }
 
-//=================================================================================================================//
-//======================================PYTHON=====================================================================//
-//=================================================================================================================//
-
-QString PyContrast(runstruct runvars, bool wait){
-
-
-}

@@ -1,4 +1,4 @@
-#include "sampletable.h"
+﻿#include "sampletable.h"
 #include "ui_sampletable.h"
 #include <QClipboard>
 #include <QTableWidgetItem>
@@ -85,15 +85,17 @@ void SampleTable::displaySamples(){
 void SampleTable::updateSamplesSlot(){
     bool ok;
 
+
     QRegExp isSum("^[+-]?\\d*\\.?\\d*([+-]\\d*\\.?\\d*)?$");
     QRegExp isDouble("^[+-]?[0-9]+([\\,\\.][0-9]+)?$");
 
-    //tableWidget is part of SampleTable
+
     for(int row=0; row< ui->tableWidget->rowCount(); row++){
         ok = true;
 
+
         //if there is already an entry in the list
-        if(row < sampleList.length()){ qDebug() << "filling table with old samples";
+        if(row < sampleList.length()){
                 //if first column is empty
                 if( ui->tableWidget->item(row,0)->text()=="")
                     ok = false;
@@ -116,7 +118,7 @@ void SampleTable::updateSamplesSlot(){
 
                 //the above checked if a cell was empty or of the wrong type
                 //if input was ok save the inputted data in the samplelist
-                if (ok){ qDebug()<< "success";
+                if (ok){
                     sampleList[row].title =  ui->tableWidget->item(row,0)->text();
                     sampleList[row].translation =  ui->tableWidget->item(row,1)->text().toDouble();
                     sampleList[row].height =  ui->tableWidget->item(row,2)->text().toDouble();
@@ -151,7 +153,7 @@ void SampleTable::updateSamplesSlot(){
                 }
                 if (ok){ // create new smaple in sampleList
                     NRSample newSample;
-qDebug() << "creating new sample";
+
                     newSample.title =  ui->tableWidget->item(row,0)->text();
                     newSample.translation =  ui->tableWidget->item(row,1)->text().toDouble();
                     newSample.height =  ui->tableWidget->item(row,2)->text().toDouble();
@@ -175,10 +177,6 @@ qDebug() << "creating new sample";
 void SampleTable::closeEvent(QCloseEvent *event)
 {
     emit closedSampWindow();
-}
-
-void SampleTable::emit_closeSignal(){
-
 }
 
 QTableWidgetSelectionRange SampleTable::selectedRange() const
@@ -241,13 +239,14 @@ void SampleTable::on_actionPaste_triggered()
     //somethingChanged();
 }
 
-
+//change to deleteRow
+//causes segfault when table tries to parse deleted widgetitems?
 void SampleTable::on_actionDelete_triggered()
-{
+{qDebug() << "is updatesampleslot called after deletion?";
     QList<QTableWidgetItem *> items = ui->tableWidget->selectedItems();
     if (!items.isEmpty()) {
         foreach (QTableWidgetItem *item, items)
-            delete item;
+            item->setText(".");
         //somethingChanged();
     }
 }
@@ -263,4 +262,10 @@ void SampleTable::on_actionCut_triggered()
 SampleTable::~SampleTable()
 {
     delete ui;
+}
+
+void SampleTable::on_actionSave_and_Close_triggered()
+{
+    //To do...
+    //emit closed sampwindow, save, parse sampletable?
 }

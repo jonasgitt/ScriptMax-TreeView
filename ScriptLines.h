@@ -35,16 +35,18 @@ public:
 };
 //OpenGenie Strings
 QString writeSamples(QList<NRSample> samples);
-QString writeRun(runstruct &runvars, bool runSM);
-QString writeContrast(runstruct runvars, bool wait);
+QString writeRun(runstruct &runvars, bool runSM, bool Python);
+QString writeContrast(runstruct runvars, bool wait, bool Python);
 QString writeJulabo(runstruct runvars, int runCont);
 QString writeEuro(runstruct runvars);
-QString writeNIMA(runstruct runvars, bool PorA);
-QString writeTransm(runstruct runvars);
+QString writeNIMA(runstruct runvars, bool Pressure, bool Python);
+QString writeTransm(runstruct runvars, bool Python);
 
 //Python Strings
 QString PyContrast(runstruct runvars, bool wait);
 
+const bool PYTHON = true;
+const bool OPENGENIE = false;
 
 #endif // SCRIPTLINES_H
 
