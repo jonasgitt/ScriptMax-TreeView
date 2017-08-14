@@ -7,7 +7,7 @@
 #include <QAbstractItemModel>
 
 
-TreeModel::TreeModel(const QStringList &headers, const QString &data, QObject *parent)
+TreeModel::TreeModel(const QStringList &headers, QObject *parent)
     : QAbstractItemModel(parent)
 {
     QVector<QVariant> rootData;

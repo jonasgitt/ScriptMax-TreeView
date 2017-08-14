@@ -21,6 +21,9 @@
 #include <QProgressBar>
 #include <QTimer>
 #include <QSize>
+#include "tree_item.h"
+#include "tree_model.h"
+#include "comboboxdelegate.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -35,27 +38,22 @@ MainWindow::MainWindow(QWidget *parent) :
     //Script is in OpenGenie at launch
     ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
+    pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
 
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
+    initTree();
 
     connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(disableRows()));
-
-
-    //------TREEVIEW------------------------------------//
-    initTree();
-    //------TREEVIEW------------------------------------//
-
 
     parseTable();
 
 }
 
 
-
-
-
-//Writes sample information and all the comments into Genie Script
 void MainWindow::writeBackbone(){
+
+    ui->plainTextEdit->clear();
+    pyWriteBackbone();
 
     QString BFileName;
     //Get Backbone from .txt file
@@ -64,12 +62,10 @@ void MainWindow::writeBackbone(){
     else if (ui->PythonButton->isChecked())
         BFileName = ":/PyBackbone.txt";
 
-    else ui->plainTextEdit->setPlainText("Neither are checked");
-
     QFile BFile(BFileName);
 
     if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open Backbone File");
+           QMessageBox::warning(this, "Error" , "Couldn't open OpenGenie Backbone File");
     }
 
     QTextStream in(&BFile);
@@ -86,8 +82,32 @@ void MainWindow::writeBackbone(){
     }
 }
 
+void MainWindow::pyWriteBackbone(){
+
+    ui->PyScriptBox->clear();
+    QString BFileName;
+    BFileName = ":/PyBackbone.txt";
+
+    QFile BFile(BFileName);
+
+    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
+           QMessageBox::warning(this, "Error" , "Couldn't open Python Backbone File");
+    }
+
+    QTextStream in(&BFile);
+    QString Pytext = in.readAll();
+    ui->PyScriptBox->setPlainText(Pytext);
+
+    BFile.close();
+
+    ui->PyScriptBox->find("def runscript()"); //positions the cursor to insert instructions
+    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+}
 
 void MainWindow::parseTable(){
+
+    //finds all comboboxes that are children of the table
+    //this won't include other comboxes which are themselves children of comboboxes
 
     QString scriptLine; // a string that temporarily stores info before adding to script
     int sendingRow;
@@ -97,13 +117,13 @@ void MainWindow::parseTable(){
     runTime = runTime.fromString("00:00", "hh:mm");
 
     // prepare script header
-    ui->plainTextEdit->clear();
     writeBackbone();
 
     ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
-    // process each table row
+
+    //FOR LOOP THROUGH TREE
         int whatAction = 0; int row;
         switch(whatAction)
         {
@@ -123,7 +143,7 @@ void MainWindow::parseTable(){
                 break;
             case 8: // contrastChange
                 {contrastChange(row);
- qDebug() <<"contrastChange";                break;}
+                break;}
             case 9:// set temperature
                 setTemp(row);
                 break;
@@ -137,9 +157,10 @@ void MainWindow::parseTable(){
 
     samplestoPlainTextEdit();
     if(ui->checkBox->isChecked()){
-        save();
+        save(OPENGENIE);
     }
-
+    if(ui->PySaveCheckBox->isChecked())
+        save(PYTHON);
 
 }
 //------------------------------------------------------------------------------------------------------------------//
@@ -154,11 +175,7 @@ void MainWindow::samplestoPlainTextEdit(){
     ui->plainTextEdit->insertPlainText(writeSamples(samples));
 }
 
-//-----------------------------------------RUNOPTIONS OVER----------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
+
 void MainWindow::updateRunTime(double angle){
     int secs;
     if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
@@ -177,16 +194,9 @@ void MainWindow::openSampleTable()
 //    if(mySampleTable->currentSample > 0){
         mySampleTable->displaySamples();
     mySampleTable->show();
+
+
 }
-
-
-
-
-
-
-
-
-
 
 
 //??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
@@ -237,7 +247,7 @@ void MainWindow::on_actionOpen_Script_triggered()
             }
         }
 
-        //FILL WITH TREEVIEW INFO
+      //INSert commands into treeview
     }
 }
 
@@ -256,11 +266,11 @@ void MainWindow::on_actionNew_Script_triggered()
       case QMessageBox::Save:
           // Save was clicked
           on_actionSave_Script_triggered();
-          //initMainTable();
+          initMainTable();
           break;
       case QMessageBox::Discard:
           // Don't Save was clicked
-          //initMainTable();
+          initMainTable();
           break;
       case QMessageBox::Cancel:
           // Cancel was clicked
@@ -285,13 +295,6 @@ void MainWindow::on_actionQuit_triggered()
     QApplication::quit();
 }
 
-
-
-//Nothing Here
-void MainWindow::on_instrumentCombo_activated(const QString &arg1)
-{
-
-}
 
 //Reveals Documentation
 void MainWindow::on_actionHow_To_triggered()
@@ -333,7 +336,7 @@ void MainWindow::on_clearTableButton_clicked()
            // should never be reached
            break;
      }
-    if (sure) initMainTable();
+    if (sure) initTree();
 }
 
 
@@ -374,52 +377,55 @@ bool MainWindow::areyousure()
 void MainWindow::on_actionSave_GCL_file_triggered()
 {
     if (ui->checkBox->isChecked())
-        save();
+        save(OPENGENIE);
     else{
         ui->checkBox->setChecked(true);
         ui->tabWidget->setCurrentIndex(1);
-        on_checkBox_clicked(true);
+        on_checkBox_clicked();
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
 
 void MainWindow::on_saveButton_clicked()
 {
-    save();
+    save(OPENGENIE);
+}
+void MainWindow::on_PySaveButton_clicked()
+{
+    save(PYTHON);
 }
 
-//used only once, at the end of Parsetable
-void MainWindow::save(){
 
+void MainWindow::save(bool OGorPy){
 
-    //lineEdit is the Save As box,
-    QString fileName = ui->lineEdit->text();
+    QString fileName;
+
+    if (OGorPy == OPENGENIE)
+        fileName = ui->lineEdit->text();
+    else
+        fileName = ui->PySaveLineEdit->text();
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox::warning(this, "Error","Could not save scriptfile.");
     } else {
         QTextStream stream(&file);
-        stream << ui->plainTextEdit->toPlainText();
+        if (OGorPy == OPENGENIE) stream << ui->plainTextEdit->toPlainText();
+        else stream << ui->PyScriptBox->toPlainText();
         stream.flush();
         file.close();
     }
 
 }
 
-
-//Tells the widget if it has been enabled or not in response to status of checkbox
-void MainWindow::on_checkBox_clicked(bool checked)
+void MainWindow::on_checkBox_clicked()
 {
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QDateTime local(QDateTime::currentDateTime());
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
-    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm");
+    QString fileLoc = loadSettings().toString();
+    qDebug() << "OGFileLoc" << fileLoc;
+    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
-    if (ui->OGButton->isChecked()) fName += ".gcl";
-    else fName += ".py";
-
-    if (checked){
+    if (ui->checkBox->isChecked()){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
         ui->saveButton->setEnabled(true);
@@ -431,26 +437,57 @@ void MainWindow::on_checkBox_clicked(bool checked)
     }
 }
 
-//"..." opens file Dialog
+void MainWindow::on_PySaveCheckBox_clicked()
+{
+    QDateTime local(QDateTime::currentDateTime());
+    QString fileLoc = loadSettings().toString();
+    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".py";
+
+    if (ui->PySaveCheckBox->isChecked()){
+        ui->PySaveLineEdit->setEnabled(true);
+        ui->PyToolButton->setEnabled(true);
+        ui->PySaveButton->setEnabled(true);
+        ui->PySaveLineEdit->setText(fName);
+    } else {
+        ui->PySaveLineEdit->setEnabled(false);
+        ui->PyToolButton->setEnabled(false);
+        ui->PySaveButton->setEnabled(false);
+    }
+
+}
+
 void MainWindow::on_toolButton_clicked()
 {
+    SaveToolButtons(OPENGENIE);
+}
+void MainWindow::on_PyToolButton_clicked()
+{
+    SaveToolButtons(PYTHON);
+}
+
+void MainWindow::SaveToolButtons(bool OGorPy){
+
     QDateTime local(QDateTime::currentDateTime());
     QString timestamp = local.toString("ddMMyy_hhmm");
 
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString lastfileLoc = loadSettings().toString();
 
     QString fName;
-    if (ui->OGButton->isChecked())
+    if (OGorPy == OPENGENIE){
        fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
                         lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
-    else
+        ui->lineEdit->setText(fName);
+    }
+    else{
         fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                                             lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
-    ui->lineEdit->setText(fName);
+                                                lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
+        ui->PySaveLineEdit->setText(fName);
+    }
+
     QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
     saveSettings("lastfileloc", saveloc, "savegroup");
 }
+
 
 void saveSettings(const QString &key, const QVariant &value, const QString &group)
 {
@@ -460,13 +497,13 @@ void saveSettings(const QString &key, const QVariant &value, const QString &grou
     settings.endGroup();
 }
 
-QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
+QVariant loadSettings()
 {
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QSettings settings;
-    settings.beginGroup(group);
-    QVariant value = settings.value(key, defaultValue);
-    settings.endGroup();
-    return value;
+    QVariant testloc = settings.value("lastfileloc", defaultLocation);
+
+    return testloc;
 }
 
 //makes document with only the most important infos. Need to delete or more clearly distinguish from save().
@@ -494,8 +531,7 @@ void MainWindow::on_actionSave_Script_triggered()
                 out << QString::number(mySampleTable->sampleList[i].knauer) << "\n";
             }
             out << "#TABLE\n";
-
-            //SUMMARIZE COMMaNDS
+            //TODO:TREEVIEW SAVE INFO
         }
         file.close();
     }
@@ -523,7 +559,6 @@ void MainWindow::on_actionSave_Script_triggered()
     }
 }
 
-//??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
 void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
@@ -531,7 +566,6 @@ void MainWindow::on_actionSave_Script_As_triggered()
                                            defaultLocation, tr("Script files (*.scp)"));
     on_actionSave_Script_triggered();
 }
-
 //--------------------------------------------------------------------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
 //----------------------------------------------NOT IN USE------------------------------------------------------------------//
@@ -600,7 +634,7 @@ void MainWindow::initTree(){
     headers << tr("Action") << tr("Summary of Command");
     TreeModel *model = new TreeModel(headers);
     ui->TreeView->setModel(model);
-    view->setAnimated(true);
+    ui->TreeView->setAnimated(true);
 
     ui->TreeView->setDragDropMode(QAbstractItemView::InternalMove);
     ui->TreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -610,18 +644,8 @@ void MainWindow::initTree(){
     ui->TreeView->setDropIndicatorShown(true);//doesnt do anything*/
     ui->TreeView->setDefaultDropAction(Qt::MoveAction);
 
-
-    connect(exitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
-    connect(ui->TreeView->selectionModel(), &QItemSelectionModel::selectionChanged,this, &MainWindow::updateActions);
-    connect(actionsMenu, &QMenu::aboutToShow, this, &MainWindow::updateActions);
-    connect(insertColumnAction, &QAction::triggered, this, &MainWindow::insertColumn);
-    connect(removeRowAction, &QAction::triggered, this, &MainWindow::removeRow);
-    connect(removeColumnAction, &QAction::triggered, this, &MainWindow::removeColumn);
-    //connect(insertChildAction, &QAction::triggered, this, &MainWindow::insertChild);
    insertChild("Choose a Command...");
-   //connect(insertRowAction, &QAction::triggered, this, &MainWindow::insertRow);
-//on_newCommand_clicked();
-    updateActions();
+
 
     ui->TreeView->setItemDelegateForColumn(0, new ComboBoxDelegate(ui->TreeView));
 
@@ -698,7 +722,7 @@ void MainWindow::insertChild(QString ChildTitle)
 
     ui->TreeView->selectionModel()->setCurrentIndex(model->index(0, 0, index),
                                             QItemSelectionModel::ClearAndSelect);
-    updateActions();
+
 }
 
 
@@ -738,7 +762,7 @@ void MainWindow::insertRow(QString Action)
     if (!model->insertRow(index.row()+1, index.parent()))//this is where insertion happens
         return;
 
-    updateActions();
+
 
     for (int column = 0; column < model->columnCount(index.parent()); ++column) {
         QModelIndex child = model->index(index.row()+1, column, index.parent());
@@ -755,35 +779,7 @@ bool MainWindow::removeColumn()
     // Insert columns in each child of the parent item.
     bool changed = model->removeColumn(column);
 
-    if (changed)
-        updateActions();
-
     return changed;
-}
-
-
-
-//menu bar "Actions"
-void MainWindow::updateActions()
-{
-    bool hasSelection = !ui->TreeView->selectionModel()->selection().isEmpty(); //if nothing is selected, add row/col is disabled since we dont know where to put it
-    removeRowAction->setEnabled(hasSelection);
-    removeColumnAction->setEnabled(hasSelection);
-
-    bool hasCurrent = ui->TreeView->selectionModel()->currentIndex().isValid();
-    insertRowAction->setEnabled(hasCurrent);
-    insertColumnAction->setEnabled(hasCurrent);
-
-    if (hasCurrent) {
-        ui->TreeView->closePersistentEditor(ui->TreeView->selectionModel()->currentIndex());
-
-        int row = ui->TreeView->selectionModel()->currentIndex().row();
-        int column = ui->TreeView->selectionModel()->currentIndex().column();
-        if (ui->TreeView->selectionModel()->currentIndex().parent().isValid())//is valid since it has a parent
-            statusBar()->showMessage(tr("Position: (%1,%2)").arg(row).arg(column));
-        else
-            statusBar()->showMessage(tr("Position: (%1,%2) in top level").arg(row).arg(column));
-    }
 }
 
 void MainWindow::InsertParameters(QStringList parameters){
@@ -808,14 +804,13 @@ bool MainWindow::insertColumn()
     if (changed)
         model->setHeaderData(column + 1, Qt::Horizontal, QVariant("[No header]"), Qt::EditRole);
 
-    updateActions();
 
     return changed;
 }
 
 void MainWindow::removeRow()
 {
-    on_RemoveCommand_clicked();
+    on_removeCommands_clicked();
 }
 
 
@@ -879,5 +874,7 @@ void MainWindow::on_removeCommands_clicked()
     QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
     if (!ui->TreeView->model()->parent(index).isValid()){
         if (model->removeRow(index.row(), index.parent()))
-            updateActions();
+            qDebug() << "FIx this";
 }
+}
+

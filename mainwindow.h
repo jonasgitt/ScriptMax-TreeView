@@ -70,7 +70,6 @@ public slots:
     void disableRows();
 
        //--------------//treeview//-----------------//
-    void updateActions();
     void updateComboSlot(QModelIndex topLeft);
        //--------------//treeview//-----------------//
 
@@ -117,9 +116,13 @@ private slots:
     bool removeColumn();
     void removeRow();
     void on_newCommand_clicked();
-    void on_RemoveCommand_clicked();
-    void on_parseButton_clicked();
+    void on_removeCommands_clicked();
+    void on_parseCommands_clicked();
     //--------------//treeview//-----------------//
+
+
+
+
 
 
 protected slots:
