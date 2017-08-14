@@ -143,6 +143,7 @@ private:
     void SaveToolButtons(bool OGorPy);
 
     //--------------//treeview//-----------------//
+    void initTree();
     void InsertParameters(QStringList parameters);
     QStringList parameterList(QVariant runOption);
     void parseModel();

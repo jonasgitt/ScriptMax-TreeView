@@ -8,7 +8,6 @@
 #include <QClipboard>
 #include <QFileDialog>
 #include <QMessageBox>
-//#include "C:\\Users\\ktd43279\\Documents\\PROGS\\MaxSCriptMaker_laptop\\include\\genie_data_access.h"
 #include <iostream>
 #include <QHostInfo>
 #include <QDesktopServices>
@@ -36,120 +35,27 @@ MainWindow::MainWindow(QWidget *parent) :
     //Script is in OpenGenie at launch
     ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
-    pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
 
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
-    initMainTable();
-    ProgressBar(10, 1);//EVENTUALLY BELONGS SOMEWHERE ELSE
 
-    connect(ui->tableWidget_1,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(parseTableSlot()));
     connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(disableRows()));
 
+
+    //------TREEVIEW------------------------------------//
+    initTree();
+    //------TREEVIEW------------------------------------//
+
+
     parseTable();
 
 }
 
 
-void MainWindow::initMainTable(){
-
-    actions << " " << "Run" << "Run with SM" << "Kinetic run" << "Run PNR" << "Run PA" \
-            << "Free text (OG)"\
-            << "--------------"<< "contrastchange" << "Set temperature" << "NIMA" \
-            << "--------------"<< "Set Field" << "Run Transmissions";
-
-
-    QList<QTableWidget*> tables = this->findChildren<QTableWidget*>(); //finds all children of type QTableWidget
-
-    //save number of rows/cols for the 0th entry in qlist, would probs be main table
-    const int ROWS = tables[0]->rowCount();
-    const int COLS = tables[0]->columnCount();
-
-    int i=0;
-
-    foreach (QTableWidget *table, tables)
-    {
-        for (int r = 0; r < ROWS; r++) {
-            QComboBox *combo = new QComboBox(); //combobox on each line
-            //combo->setParent(table);
-            table->setCellWidget (r, 0, combo); //combobox in row r and column 0
-            combo->addItems(actions);           //puts runoptions in combobox
-            combo->setProperty("row", r);   //sets the row property to hold row number r
-            connect(combo, SIGNAL(currentIndexChanged(int)), this, SLOT(onRunSelected(int)));
-            i++;
-            combo->setDisabled(mySampleTable->sampleList.isEmpty());
-        }
-        for (int row = 0; row< ROWS; row++){
-            for (int col = 1; col< COLS; col++){
-
-                //if there is a combobox in a cell remove the cell widget?
-                if(qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,col)))
-                    ui->tableWidget_1->removeCellWidget(row,col);
-                QTableWidgetItem *newItem = new QTableWidgetItem;
-                newItem->setText("");
-                table->setItem(row,col,newItem); //puts/replaces an empty cell where the widget was removed
-
-            }
-        }
-
-        //don't these two commands work against eachother
-        table->resizeColumnToContents(0);
-        table->setColumnWidth(10,40);
-    }
-
-    disableRows();
-
-    connect(ui->pushButton_3, SIGNAL(clicked()), this, SLOT(openSampleTable()));
-    connect(ui->playButton, SIGNAL(clicked()), this, SLOT(runGenie())); //PLAY BUTTON
-    ui->tableWidget_1->setColumnWidth(0,120);
-
-    //Shows Context Menu
-    ui->tableWidget_1->verticalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->tableWidget_1->verticalHeader(), SIGNAL(customContextMenuRequested(const QPoint&)),
-        this, SLOT(ShowContextMenu(const QPoint&)));
-
-    // initialise run time to 0:
-    QTime time = QTime::fromString("00:00", "hh:mm");
-    runTime = time;
-
-}
-
-void MainWindow::disableRows(){
-
-    QList<QComboBox*> boxes = ui->tableWidget_1->findChildren<QComboBox*>();
-    bool disable;
-    if (mySampleTable->sampleList.isEmpty()) disable = true;
-    else disable = false;
-
-    for (int row = 0; row < 100; row++){
-        QComboBox *box = boxes[row];
-        box->setDisabled(disable);
-
-        auto currentFlags = ui->tableWidget_1->item(row,10)->flags();
-        ui->tableWidget_1->item(row,10)->setFlags(currentFlags & (~Qt::ItemIsEditable));  //permanently disable column 10 for progressbars
-
-        for (int col = 1; col < 10; col++){
-            currentFlags = ui->tableWidget_1->item(row,col)->flags();
-            if (disable) {
-                ui->tableWidget_1->item(row,col)->setFlags(currentFlags & (~Qt::ItemIsEditable));
-            }
-            else {
-                ui->tableWidget_1->item(row,col)->setFlags(currentFlags | Qt::ItemIsEditable);
-            }
-        }
-    }
-}
 
 
 
-void MainWindow::parseTableSlot(){
-    parseTable();
-}
-
-
+//Writes sample information and all the comments into Genie Script
 void MainWindow::writeBackbone(){
-
-    ui->plainTextEdit->clear();
-    pyWriteBackbone();
 
     QString BFileName;
     //Get Backbone from .txt file
@@ -158,10 +64,12 @@ void MainWindow::writeBackbone(){
     else if (ui->PythonButton->isChecked())
         BFileName = ":/PyBackbone.txt";
 
+    else ui->plainTextEdit->setPlainText("Neither are checked");
+
     QFile BFile(BFileName);
 
     if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open OpenGenie Backbone File");
+           QMessageBox::warning(this, "Error" , "Couldn't open Backbone File");
     }
 
     QTextStream in(&BFile);
@@ -178,54 +86,25 @@ void MainWindow::writeBackbone(){
     }
 }
 
-void MainWindow::pyWriteBackbone(){
-
-    ui->PyScriptBox->clear();
-    QString BFileName;
-    BFileName = ":/PyBackbone.txt";
-
-    QFile BFile(BFileName);
-
-    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open Python Backbone File");
-    }
-
-    QTextStream in(&BFile);
-    QString Pytext = in.readAll();
-    ui->PyScriptBox->setPlainText(Pytext);
-
-    BFile.close();
-
-    ui->PyScriptBox->find("def runscript()"); //positions the cursor to insert instructions
-    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-}
 
 void MainWindow::parseTable(){
 
-    //finds all comboboxes that are children of the table
-    //this won't include other comboxes which are themselves children of comboboxes
-    QList<QComboBox*> combo = ui->tableWidget_1->findChildren<QComboBox*>();
     QString scriptLine; // a string that temporarily stores info before adding to script
     int sendingRow;
 
-    // change column headers according to row being edited
-    sendingRow = ui->tableWidget_1->currentRow();
-    if(sendingRow>-1)
-        setHeaders(combo[sendingRow]->currentIndex());
 
     // initialise run time to 0:
     runTime = runTime.fromString("00:00", "hh:mm");
 
     // prepare script header
+    ui->plainTextEdit->clear();
     writeBackbone();
 
     ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
     // process each table row
-    for (int row=0; row < ui->tableWidget_1->rowCount(); row++){
-        //ui->tableWidget_1->item(row, 8)->setBackground(Qt::white);
-        int whatAction = combo[row]->currentIndex();
+        int whatAction = 0; int row;
         switch(whatAction)
         {
             case 0:
@@ -244,7 +123,7 @@ void MainWindow::parseTable(){
                 break;
             case 8: // contrastChange
                 {contrastChange(row);
-                break;}
+ qDebug() <<"contrastChange";                break;}
             case 9:// set temperature
                 setTemp(row);
                 break;
@@ -255,13 +134,12 @@ void MainWindow::parseTable(){
                 runTrans(row);
                 break;
         }
-    }
+
     samplestoPlainTextEdit();
     if(ui->checkBox->isChecked()){
-        save(OPENGENIE);
+        save();
     }
-    if(ui->PySaveCheckBox->isChecked())
-        save(PYTHON);
+
 
 }
 //------------------------------------------------------------------------------------------------------------------//
@@ -274,255 +152,6 @@ void MainWindow::samplestoPlainTextEdit(){
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
     QList<NRSample> samples = mySampleTable->sampleList;
     ui->plainTextEdit->insertPlainText(writeSamples(samples));
-}
-
-void MainWindow::normalRun(int row, bool runSM){
-
-    bool ok;
-    QComboBox* whichSamp = new QComboBox;
-    runstruct runvars;
-
-    if(mySampleTable->sampleList.length()){ //if there is a sample
-
-            whichSamp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-            runvars.sampName = mySampleTable->sampleList[whichSamp->currentIndex()].title;
-
-            mySampleTable->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
-            runvars.subtitle = ui->tableWidget_1->item(row,2)->text();
-
-            runvars.sampNum = QString::number(whichSamp->currentIndex()+1);
-
-            for(int cell = 0; cell < 3; cell++){
-                ok = false;
-                runvars.angles[cell] = (ui->tableWidget_1->item(row,2*cell+3)->text()).toDouble(&ok);
-                runvars.uAmps[cell] = (ui->tableWidget_1->item(row,2*cell+4)->text()).toDouble(&ok);
-
-                if (runvars.angles[cell] > 0.0 && runvars.uAmps[cell] > 0.0) // apply filter on 'reasonable' angles and run times
-                {
-                    ok = true;
-                    updateRunTime(runvars.uAmps[cell]);
-                } else if  (!(ui->tableWidget_1->item(row,2*cell+3)->text().contains("Angle")\
-                            && ui->tableWidget_1->item(row,2*cell+4)->text().contains("uAmps"))\
-                        || !(ui->tableWidget_1->item(row,2*cell+3)->text() == ""\
-                                && ui->tableWidget_1->item(row,2*cell+4)->text() == ""))
-                    {
-                        ok = false; break;
-                    }
-            };
-
-            if (ok){
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-            } else {
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-            }
-        }
-
-    QString scriptText;
-    scriptText = writeRun(runvars, runSM, false);
-    ui->plainTextEdit->insertPlainText(scriptText);
-    ui->PyScriptBox->insertPlainText(writeRun(runvars, runSM, true));
-    return;
-}
-
-void MainWindow::kineticRun(int row){
-
-    QComboBox* whichSamp = new QComboBox;
-    QString scriptLine;
-
-    whichSamp=(QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-    scriptLine = "runTime = runKinetic(s" + QString::number(whichSamp->currentIndex()+1) \
-            + "," + ui->tableWidget_1->item(row,3)->text() + "," \
-            + ui->tableWidget_1->item(row,4)->text() + ")";
-    ui->plainTextEdit->insertPlainText(scriptLine+ "\n");
-    return;
-}
-
-void MainWindow::OGcommand(int row){
-
-      ui->plainTextEdit->insertPlainText(ui->tableWidget_1->item(row,1)->text()+ "\n");
-}
-
-void MainWindow::contrastChange(int row){
-
-    int percentSum = 0;
-    int secs;
-    double angle1;
-    bool ok, wait;
-    QString OGscriptLine, PyScriptLine;
-    QComboBox* whichSamp = new QComboBox;
-    QComboBox* continueRun = new QComboBox;
-
-    runstruct runvars;
-
-    whichSamp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-    continueRun = (QComboBox*)ui->tableWidget_1->cellWidget(row, 8);
-
-    // check if A-D are integers and sum to 100:
-    for (int i=0; i < 4; i++){
-        runvars.concs[i] = (ui->tableWidget_1->item(row,i+2)->text()).toInt(&ok);
-
-        if (runvars.concs[i] >= 0){
-            percentSum += runvars.concs[i];
-        } else {
-            percentSum = 0;
-            break;
-        }
-    }
-
-    runvars.flow = (ui->tableWidget_1->item(row,6)->text()).toDouble();
-    runvars.volume = (ui->tableWidget_1->item(row,7)->text()).toDouble();
-    runvars.knauer = mySampleTable->sampleList[whichSamp->currentIndex()].knauer;
-
-    if (percentSum != 100 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
-        ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-        return;
-       }
-    else ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-
-    if (continueRun->currentIndex()){
-
-        angle1 = runvars.volume/runvars.flow; //pump time in minutes
-        secs = static_cast<int>(angle1*60); //for TS2 current
-        ui->timeEdit->setTime(runTime.addSecs(secs));//whichSamp->currentIndex()+1)
-
-        wait = true;
-        OGscriptLine = writeContrast(runvars, wait, false);
-        PyScriptLine = writeContrast(runvars, wait, true);
-
-    }else {
-        wait = false;
-        OGscriptLine = writeContrast(runvars, wait, false);
-        PyScriptLine = writeContrast(runvars, wait, true);
-    }
-    ui->plainTextEdit->insertPlainText(OGscriptLine + "\n");
-    ui->PyScriptBox->insertPlainText(PyScriptLine + "\n");
-    return;
-}
-
-void MainWindow::setTemp(int row){
-
-    QString scriptLine = "";
-    bool ok;
-    QComboBox* whichTemp = new QComboBox;
-    QComboBox* runControl = new QComboBox;
-    runstruct runvars;
-
-    ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-
-    whichTemp = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-    switch (whichTemp->currentIndex())
-    {
-        case 0:{ //Julabo control
-            ok=true;
-            runControl = (QComboBox*)ui->tableWidget_1->cellWidget(row, 3);
-            //int runCont = 1;//TEMP
-            runvars.JTemp = ui->tableWidget_1->item(row,2)->text().toDouble(&ok);
-
-            int runCont;
-            if (runvars.JTemp > -5.0 && runvars.JTemp < 95.0 && ok)
-                    runCont = runControl->currentIndex();
-
-            if (runCont && ok){
-                runvars.JMin = ui->tableWidget_1->item(row,4)->text().toDouble(&ok);
-                runvars.JMax = ui->tableWidget_1->item(row,5)->text().toDouble(&ok);
-
-                if (runCont && runvars.JMax > runvars.JTemp && runvars.JMin < runvars.JTemp){
-                    scriptLine = writeJulabo(runvars, runCont);
-                    ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-                }
-             }
-
-            else if (!runCont && ok) {
-                scriptLine = writeJulabo(runvars, runCont);
-                ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-            }
-
-            break;}
-    case 1:{ // Eurotherms control
-            ok = true;
-            int i = 0;
-
-            while(i < 9 && ok){
-                runvars.euroTemps[i] = (ui->tableWidget_1->item(row,i+2)->text()).toDouble(&ok);
-                i++;
-            }
-            if (ok) ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-            scriptLine = writeEuro(runvars);
-
-            break;}
-    case 2:{ // Peltier control
-            break;}
-    }
-
-    ui->plainTextEdit->insertPlainText(scriptLine + "\n");
-    return;
-}
-
-void MainWindow::setNIMA(int row){
-
-      QString OGscriptLine, PyScriptLine;
-      QComboBox* box1 = new QComboBox;
-      bool Pressure, ok;
-      runstruct runvars;
-
-      box1 = (QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-      ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-
-      if(box1->currentText().contains("Pressure")){
-          Pressure = true;
-          runvars.pressure = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
-       }
-
-      else if (box1->currentText().contains("Area"))
-          Pressure = false;
-          runvars.area = (ui->tableWidget_1->item(row,2)->text()).toDouble(&ok);
-
-      if (ok) {
-          OGscriptLine = writeNIMA(runvars, Pressure, false);
-          PyScriptLine = writeNIMA(runvars, Pressure, true);
-          ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-      }
-
-      ui->plainTextEdit->insertPlainText(OGscriptLine + "\n");
-      ui->PyScriptBox->insertPlainText(PyScriptLine);
-      return;
-}
-
-void MainWindow::runTrans(int row){
-
-    double angle2;
-    bool ok;
-    QComboBox* whichSamp = new QComboBox;
-    runstruct runvars;
-
-    if(mySampleTable->sampleList.length()){
-        whichSamp=(QComboBox*)ui->tableWidget_1->cellWidget(row, 1);
-        runvars.sampName = mySampleTable->sampleList[whichSamp->currentIndex()].title;
-
-        mySampleTable->sampleList[whichSamp->currentIndex()].subtitle = ui->tableWidget_1->item(row,2)->text();
-        runvars.subtitle = ui->tableWidget_1->item(row,2)->text();
-
-        runvars.sampNum = QString::number(whichSamp->currentIndex()+1);
-        runvars.heightOffsT = (ui->tableWidget_1->item(row,3)->text()).toDouble(&ok);
-
-        for (int i = 0; i < 3; i++){
-            runvars.angles[i] = (ui->tableWidget_1->item(row,i+4)->text()).toDouble(&ok);
-        }
-        runvars.uAmpsT = (ui->tableWidget_1->item(row,7)->text()).toDouble(&ok);
-        angle2 = (ui->tableWidget_1->item(row,8)->text()).toDouble(&ok);
-
-        if (ok){
-            ui->tableWidget_1->item(row, 10)->setBackground(Qt::green);
-            updateRunTime(angle2);
-
-            ui->plainTextEdit->insertPlainText(writeTransm(runvars, false) + "\n");
-            ui->PyScriptBox->insertPlainText(writeTransm(runvars, true) + "\n");
-
-        } else ui->tableWidget_1->item(row, 10)->setBackground(Qt::red);
-
-    }
-
-    return;
 }
 
 //-----------------------------------------RUNOPTIONS OVER----------------------------------------------------------//
@@ -548,412 +177,15 @@ void MainWindow::openSampleTable()
 //    if(mySampleTable->currentSample > 0){
         mySampleTable->displaySamples();
     mySampleTable->show();
-
-
 }
 
 
 
-void MainWindow::updateSubtitleSlot(){
-    /*QComboBox *comb = (QComboBox *)sender();
-    int nRow = comb->property("row").toInt();
-    ui->tableWidget_1->item(nRow,2)->setText(mySampleTable->sampleList[comb->currentIndex()].subtitle);
-    */
-    parseTable();
-}
 
 
 
-//changes the table when we select run, run transmissions, contrast change
-void MainWindow::setHeaders(int which){
-      switch (which) {
-    case 0: // empty
-        for(int i=2; i<12; i++){
-            ui->tableWidget_1->setHorizontalHeaderItem(i-1,new QTableWidgetItem(QString::number(i)));
-        }
-        break;
-    case 1: // Run
-        ui->tableWidget_1->setHorizontalHeaderItem(2,new QTableWidgetItem("Subtitle"));
-        ui->tableWidget_1->setHorizontalHeaderItem(3,new QTableWidgetItem("Angle 1"));
-        ui->tableWidget_1->setHorizontalHeaderItem(4,new QTableWidgetItem("uAmps 1"));
-        ui->tableWidget_1->setHorizontalHeaderItem(5,new QTableWidgetItem("Angle 2"));
-        ui->tableWidget_1->setHorizontalHeaderItem(6,new QTableWidgetItem("uAmps 2"));
-        ui->tableWidget_1->setHorizontalHeaderItem(7,new QTableWidgetItem("Angle 3"));
-        ui->tableWidget_1->setHorizontalHeaderItem(8,new QTableWidgetItem("uAmps 3"));
-        break;
-    case 8: // contrastChange
-        ui->tableWidget_1->setHorizontalHeaderItem(2,new QTableWidgetItem("concA"));
-        ui->tableWidget_1->setHorizontalHeaderItem(3,new QTableWidgetItem("concB"));
-        ui->tableWidget_1->setHorizontalHeaderItem(4,new QTableWidgetItem("concC"));
-        ui->tableWidget_1->setHorizontalHeaderItem(5,new QTableWidgetItem("concD"));
-        ui->tableWidget_1->setHorizontalHeaderItem(6,new QTableWidgetItem("Flow [mL/min]"));
-        ui->tableWidget_1->setHorizontalHeaderItem(7,new QTableWidgetItem("Volume [mL]"));
-        break;
-    case 13: // Run transmissions
-        ui->tableWidget_1->setHorizontalHeaderItem(2,new QTableWidgetItem("Subtitle"));
-        ui->tableWidget_1->setHorizontalHeaderItem(3,new QTableWidgetItem("height offset"));
-        ui->tableWidget_1->setHorizontalHeaderItem(4,new QTableWidgetItem("s1vg"));
-        ui->tableWidget_1->setHorizontalHeaderItem(5,new QTableWidgetItem("s2vg"));
-        ui->tableWidget_1->setHorizontalHeaderItem(6,new QTableWidgetItem("s3vg"));
-        ui->tableWidget_1->setHorizontalHeaderItem(7,new QTableWidgetItem("s4vg"));
-        ui->tableWidget_1->setHorizontalHeaderItem(8,new QTableWidgetItem("uamps"));
-        break;
-    default:
-        break;
-    }
-}
 
 
-void MainWindow::runControl(int value){
-    QComboBox *comb = (QComboBox *)sender();
-    QTableWidget *tabl = (QTableWidget *)comb->parentWidget()->parent();
-    int nRow = comb->property("row").toInt();
-
-    switch(value)
-    {
-        case 0:
-            tabl->item(nRow,4)->setText("");
-            tabl->item(nRow,5)->setText("");
-            break;
-        case 1:
-            tabl->item(nRow,4)->setText("MIN");
-            tabl->item(nRow,5)->setText("MAX");
-            break;
-    }
-}
-
-
-void  MainWindow::onDeviceSelected(int value)
-{
-    QComboBox *comb = (QComboBox *)sender();
-    QTableWidget *tabl = (QTableWidget *)comb->parentWidget()->parent();
-    QComboBox* runControl = new QComboBox;
-    QStringList yesNo;
-    int nRow = comb->property("row").toInt();
-
-    QComboBox* box = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(nRow,3));
-    if(box)
-        tabl->removeCellWidget(nRow,3); // remove run control box
-    for(int i=1;i<10;i++){
-        tabl->item(nRow,i)->setText("");
-    }
-    switch(value)
-    {
-        case 0:
-            tabl->item(nRow,2)->setText("Julabo Temp");            
-            yesNo << "no runcontrol" << "RUNCONTROL";
-            runControl->addItems(yesNo);
-            tabl->setCellWidget(nRow,3,runControl);
-            runControl->setProperty("row", nRow);
-            connect(runControl, SIGNAL(activated(int)), this, SLOT(runControl(int)));
-            break;
-        case 1:
-            tabl->item(nRow,2)->setText("T1");
-            tabl->item(nRow,3)->setText("T2");
-            tabl->item(nRow,4)->setText("T3");
-            tabl->item(nRow,5)->setText("T4");
-            tabl->item(nRow,6)->setText("T5");
-            tabl->item(nRow,7)->setText("T6");
-            tabl->item(nRow,8)->setText("T7");
-            break;
-    }
-}
-
-
-void  MainWindow::onModeSelected(int value)
-{
-    QComboBox *comb = (QComboBox *)sender();
-    QTableWidget *tabl = (QTableWidget *)comb->parentWidget()->parent();
-    int nRow = comb->property("row").toInt();
-
-    for(int i=1;i<10;i++){
-        tabl->item(nRow,i)->setText("");
-    }
-    switch(value)
-    {
-        case 0:
-            tabl->item(nRow,2)->setText("Target p");
-            break;
-        case 1:
-            tabl->item(nRow,2)->setText("Target A");
-            break;
-    }
-}
-
-
-void  MainWindow::onRunSelected(int value)
-{
-    QComboBox *comb = (QComboBox *)sender();
-    QTableWidget *tabl = (QTableWidget *)comb->parentWidget()->parent();
-
-    int nRow = comb->property("row").toInt();
-    for(int i=1;i < ui->tableWidget_1->columnCount();i++){
-        tabl->item(nRow,i)->setText("");
-    }
-    QComboBox* comboTemp = new QComboBox();
-    QStringList devices;
-    devices << "Julabo Waterbath" << "Eurotherm 8x" << "Peltier x4";
-    comboTemp->addItems(devices);
-
-    QComboBox* combo = new QComboBox();
-    QStringList modes;
-    modes << "Pressure Ctrl" << "Area Ctrl";
-    combo->addItems(modes);
-
-    comb->setStyleSheet("QComboBox { background-color: lightGray; }");
-
-    QComboBox* samplesCombo = new QComboBox();
-    QString s;
-    samples.clear();
-    for (int i=0;i<mySampleTable->sampleList.length();i++){
-        s = mySampleTable->sampleList[i].title;
-        samples << s;
-    }
-
-    samplesCombo->addItems(samples);
-
-    QComboBox* waitCombo = new QComboBox();
-    QStringList wait;
-    wait << "CONTINUE" << "WAIT";
-    waitCombo->addItems(wait);
-
-    tabl->removeCellWidget(nRow,1);
-    tabl->removeCellWidget(nRow,3);
-    tabl->removeCellWidget(nRow,8);
-    setHeaders(0);
-
-    switch(value)
-    {
-    case 1: // run
-            if(mySampleTable->sampleList.length()){
-                setHeaders(1);
-                comb->setStyleSheet("QComboBox { background-color: lightGreen; }");
-                tabl->removeCellWidget(nRow,1);
-                tabl->setCellWidget (nRow, 1, samplesCombo);
-                tabl->item(nRow,2)->setText(mySampleTable->sampleList[samplesCombo->currentIndex()].subtitle);
-                tabl->item(nRow,2)->setToolTip("Subtitle");
-                tabl->item(nRow,3)->setText("Angle 1");
-                tabl->item(nRow,3)->setToolTip("Angle 1");
-                tabl->item(nRow,4)->setText("uAmps 1");
-                tabl->item(nRow,4)->setToolTip("uAmps 1");
-                tabl->item(nRow,5)->setText("Angle 2");
-                tabl->item(nRow,5)->setToolTip("Angle 2");
-                tabl->item(nRow,6)->setText("uAmps 2");
-                tabl->item(nRow,6)->setToolTip("uAmps 2");
-                tabl->item(nRow,7)->setText("Angle 3");
-                tabl->item(nRow,7)->setToolTip("Angle 3");
-                tabl->item(nRow,8)->setText("uAmps 3");
-                tabl->item(nRow,8)->setToolTip("uAmps 3");
-                connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(updateSubtitleSlot()));
-            } else {
-                QMessageBox msgBox;
-                msgBox.setIcon(QMessageBox::Warning);
-                msgBox.setText("There are no samples to run. Please define at least one!");
-                msgBox.exec();
-            }
-            break;
-        case 2: // run with SM
-            setHeaders(1);
-            comb->setStyleSheet("QComboBox { background-color: lightGreen; }");
-            tabl->removeCellWidget(nRow,1);
-            tabl->setCellWidget (nRow, 1, samplesCombo);
-            tabl->item(nRow,2)->setText(mySampleTable->sampleList[samplesCombo->currentIndex()].subtitle);
-            tabl->item(nRow,2)->setToolTip("Subtitle");
-            tabl->item(nRow,3)->setText("Angle 1");
-            tabl->item(nRow,3)->setToolTip("Angle 1");
-            tabl->item(nRow,4)->setText("uAmps 1");
-            tabl->item(nRow,4)->setToolTip("uAmps 1");
-            tabl->item(nRow,5)->setText("Angle 2");
-            tabl->item(nRow,5)->setToolTip("Angle 2");
-            tabl->item(nRow,6)->setText("uAmps 2");
-            tabl->item(nRow,6)->setToolTip("uAmps 2");
-            tabl->item(nRow,7)->setText("Angle 3");
-            tabl->item(nRow,7)->setToolTip("Angle 3");
-            tabl->item(nRow,8)->setText("uAmps 3");
-            tabl->item(nRow,8)->setToolTip("uAmps 3");
-            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(updateSubtitleSlot()));
-            break;
-        case 3: // run kinetic
-            comb->setStyleSheet("QComboBox { background-color: lightGreen; }");
-            tabl->removeCellWidget(nRow,1);
-            tabl->setCellWidget (nRow, 1, samplesCombo);
-            tabl->item(nRow,3)->setText("Angle");
-            tabl->item(nRow,3)->setToolTip("Angle");
-            tabl->item(nRow,4)->setText("time");
-            tabl->item(nRow,4)->setToolTip("time per step");
-            tabl->item(nRow,5)->setText("No of steps");
-            tabl->item(nRow,4)->setToolTip("No of steps");
-            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(parseTableSlot()));
-            break;
-        case 8: // contrastChange
-            setHeaders(8);
-            tabl->removeCellWidget(nRow,1);
-            tabl->setCellWidget (nRow, 1, samplesCombo);
-            tabl->item(nRow,2)->setText("conc A");
-            tabl->item(nRow,2)->setToolTip("conc A");
-            tabl->item(nRow,3)->setText("conc B");
-            tabl->item(nRow,3)->setToolTip("conc B");
-            tabl->item(nRow,4)->setText("conc C");
-            tabl->item(nRow,4)->setToolTip("conc C");
-            tabl->item(nRow,5)->setText("conc D");
-            tabl->item(nRow,5)->setToolTip("conc D");
-            tabl->item(nRow,6)->setText("Flow[mL/min]");
-            tabl->item(nRow,6)->setToolTip("Flow[mL/min]");
-            tabl->item(nRow,7)->setText("Volume[mL]");
-            tabl->item(nRow,6)->setToolTip("Volume[mL]");
-            tabl->setCellWidget (nRow, 8, waitCombo);
-            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(Slot()));
-            connect(waitCombo, SIGNAL(activated(int)), this, SLOT(parseTableSlot()));
-            break;
-        case 9: // set temperature
-            comb->setStyleSheet("QComboBox { background-color: orange; }");
-            tabl->setCellWidget (nRow, 1, comboTemp);
-            comboTemp->setProperty("row", nRow);
-            connect(comboTemp, SIGNAL(currentIndexChanged(int)), this, SLOT(onDeviceSelected(int)));
-            connect(comboTemp, SIGNAL(activated(int)), this, SLOT(onDeviceSelected(int)));
-            //comboTemp->setCurrentIndex(1);
-            //comboTemp->setCurrentIndex(0);
-            break;
-        case 10: // NIMA control
-            tabl->setCellWidget (nRow, 1, combo);
-            combo->setProperty("row", nRow);
-            connect(combo, SIGNAL(activated(int)), this, SLOT(onModeSelected(int)));
-            break;
-        case 13: // Run Transmissions
-            setHeaders(13);
-            tabl->removeCellWidget(nRow,1);
-            tabl->setCellWidget (nRow, 1, samplesCombo);
-            tabl->item(nRow,2)->setText("Subtitle");
-            tabl->item(nRow,2)->setToolTip("Subtitle");
-            tabl->item(nRow,3)->setText("height offset");
-            tabl->item(nRow,3)->setToolTip("height offset");
-            tabl->item(nRow,4)->setText("s1vg");
-            tabl->item(nRow,4)->setToolTip("s1vg");
-            tabl->item(nRow,5)->setText("s2vg");
-            tabl->item(nRow,5)->setToolTip("s2vg");
-            tabl->item(nRow,6)->setText("s3vg");
-            tabl->item(nRow,6)->setToolTip("s3vg");
-            tabl->item(nRow,7)->setText("s4vg");
-            tabl->item(nRow,7)->setToolTip("s4vg");
-            tabl->item(nRow,7)->setText("uAmps");
-            tabl->item(nRow,7)->setToolTip("uAmps");
-            connect(samplesCombo, SIGNAL(activated(int)), this, SLOT(parseTableSlot()));
-            break;
-    }
-
-    parseTable();
-    //emit valueChanged(value);
-}
-
-//-------------------------------------------------------------------------------------------------------------//
-//-------------------------------------------------------------------------------------------------------------//
-//-----------------------------------COPY CUT PASTE ETC--------------------------------------------------------//
-//-------------------------------------------------------------------------------------------------------------//
-
-//this is a right-click
-void MainWindow::ShowContextMenu(const QPoint& pos) // this is a slot
-{
-    // for most widgets
-    QPoint globalPos = ui->tableWidget_1->mapToGlobal(pos);
-    // for QAbstractScrollArea and derived classes you would use:
-    // QPoint globalPos = myWidget->viewport()->mapToGlobal(pos);
-
-    QMenu myMenu;
-    myMenu.addAction(new QAction("Insert Empty Row", this));
-    //connect(newAction, SIGNAL(triggered()), this, SLOT(insertEmptyRow()));
-    myMenu.addAction(new QAction("Delete Row", this));
-    // ...
-
-    QAction* selectedItem = myMenu.exec(globalPos);
-    if (selectedItem)
-    {
-        int row = ui->tableWidget_1->row(ui->tableWidget_1->itemAt(pos));
-        ui->tableWidget_1->item(2,2)->setText(QString::number(row));
-        // something was chosen, do stuff
-    }
-    else
-    {
-        // nothing was chosen
-    }
-}
-
-QTableWidgetSelectionRange MainWindow::selectedRange() const
-{
-    QList<QTableWidgetSelectionRange> ranges = ui->tableWidget_1->selectedRanges();
-    if (ranges.isEmpty())
-        return QTableWidgetSelectionRange();
-    return ranges.first();
-}
-
-//copies table content to clipboard for pasting
-void MainWindow::on_actionCopy_triggered()
-{
-    QTableWidgetSelectionRange range = selectedRange();
-    QString str;
-
-    for (int i = 0; i < range.rowCount(); ++i) {
-        if (i > 0)
-            str += "\n";
-        for (int j = 0; j < range.columnCount(); ++j) {
-            if (j > 0)
-                str += "\t";
-            str += ui->tableWidget_1->item(range.topRow() + i, range.leftColumn() + j)->text();
-        }
-    }
-    QApplication::clipboard()->setText(str);
-
-}
-
-
-//let's user paste into other row/column
-void MainWindow::on_actionPaste_triggered()
-{
-    QTableWidgetSelectionRange range = selectedRange();
-    QString str = QApplication::clipboard()->text();
-    QStringList rows = str.split('\n');
-    int numRows = rows.count();
-    int numColumns = rows.first().count('\t') + 1;
-
-    if (range.rowCount() * range.columnCount() != 1
-            && (range.rowCount() != numRows
-                || range.columnCount() != numColumns)) {
-
-        /*QMessageBox::information(this, tr("Spreadsheet"),
-                tr("The information cannot be pasted because the copy "
-                   "and paste areas aren't the same size."));
-                   */
-        return;
-    }
-
-    for (int i = 0; i < numRows; ++i) {
-        QStringList columns = rows[i].split('\t');
-        for (int j = 0; j < numColumns; ++j) {
-            int row = range.topRow() + i;
-            int column = range.leftColumn() + j;
-            if (row < ui->tableWidget_1->rowCount() && column < ui->tableWidget_1->columnCount())
-                ui->tableWidget_1->item(row, column)->setText(columns[j]);
-        }
-    }
-    //somethingChanged();
-}
-
-//lets user delete
-void MainWindow::on_actionDelete_triggered()
-{
-    QList<QTableWidgetItem *> items = ui->tableWidget_1->selectedItems();
-    if (!items.isEmpty()) {
-        foreach (QTableWidgetItem *item, items)
-            delete item;
-        //somethingChanged();
-    }
-}
-
-//Copies and Deletes at the same time
-void MainWindow::on_actionCut_triggered()
-{
-    on_actionCopy_triggered();
-    on_actionDelete_triggered();
-}
 
 
 
@@ -1005,47 +237,7 @@ void MainWindow::on_actionOpen_Script_triggered()
             }
         }
 
-        //after the parameters the tablestarts, this info is now read
-        //??don't really understand what this is doing
-        for(int row=0; row < line_count; row++ ){
-            QComboBox* box1 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,0));
-            rowEntries = line[row+tableStart+1].split(',');
-            int index1 = box1->findText(rowEntries[0]); //findText returns index of item containing whatever is at rowEntries[0]
-            if(index1>0){
-                box1->setCurrentIndex(index1);
-                if(box1->currentText() == "contrastchange"){
-                    QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-                    box2->setCurrentIndex(box2->findText(rowEntries[1]));
-                    for(int col = 2; col < 8; col++){
-                        ui->tableWidget_1->item(row,col)->setText(rowEntries[col]);
-                    }
-                    QComboBox* box3 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,8));
-                    int index2 = box3->findText(rowEntries[8]);
-                    box3->setCurrentIndex(index2);
-                } else if(box1->currentText().contains("Set temperature")\
-                          && rowEntries[1] == "Julabo Waterbath"){
-                    QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-                    box2->setCurrentIndex(1);
-                    box2->setCurrentIndex(0);
-                    ui->tableWidget_1->item(row,2)->setText(rowEntries[2]);
-                    QComboBox* box4 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,3));
-                    if (box4){
-                        int index2 = box4->findText(rowEntries[3]);
-                        box4->setCurrentIndex(index2);
-                    }
-                    for(int col = 4; col < 9; col++){
-                        ui->tableWidget_1->item(row,col)->setText(rowEntries[col]);
-                    }
-
-                } else if(rowEntries.length()){
-                    QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-                    box2->setCurrentIndex(box2->findText(rowEntries[1]));
-                    for(int col = 2; col < 9; col++){
-                        ui->tableWidget_1->item(row,col)->setText(rowEntries[col]);
-                    }
-                }
-            }
-        }
+        //FILL WITH TREEVIEW INFO
     }
 }
 
@@ -1064,11 +256,11 @@ void MainWindow::on_actionNew_Script_triggered()
       case QMessageBox::Save:
           // Save was clicked
           on_actionSave_Script_triggered();
-          initMainTable();
+          //initMainTable();
           break;
       case QMessageBox::Discard:
           // Don't Save was clicked
-          initMainTable();
+          //initMainTable();
           break;
       case QMessageBox::Cancel:
           // Cancel was clicked
@@ -1182,55 +374,52 @@ bool MainWindow::areyousure()
 void MainWindow::on_actionSave_GCL_file_triggered()
 {
     if (ui->checkBox->isChecked())
-        save(OPENGENIE);
+        save();
     else{
         ui->checkBox->setChecked(true);
         ui->tabWidget->setCurrentIndex(1);
-        on_checkBox_clicked();
+        on_checkBox_clicked(true);
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
 
 void MainWindow::on_saveButton_clicked()
 {
-    save(OPENGENIE);
-}
-void MainWindow::on_PySaveButton_clicked()
-{
-    save(PYTHON);
+    save();
 }
 
+//used only once, at the end of Parsetable
+void MainWindow::save(){
 
-void MainWindow::save(bool OGorPy){
 
-    QString fileName;
-
-    if (OGorPy == OPENGENIE)
-        fileName = ui->lineEdit->text();
-    else
-        fileName = ui->PySaveLineEdit->text();
+    //lineEdit is the Save As box,
+    QString fileName = ui->lineEdit->text();
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox::warning(this, "Error","Could not save scriptfile.");
     } else {
         QTextStream stream(&file);
-        if (OGorPy == OPENGENIE) stream << ui->plainTextEdit->toPlainText();
-        else stream << ui->PyScriptBox->toPlainText();
+        stream << ui->plainTextEdit->toPlainText();
         stream.flush();
         file.close();
     }
 
 }
 
-void MainWindow::on_checkBox_clicked()
-{
-    QDateTime local(QDateTime::currentDateTime());
-    QString fileLoc = loadSettings().toString();
-    qDebug() << "OGFileLoc" << fileLoc;
-    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
-    if (ui->checkBox->isChecked()){
+//Tells the widget if it has been enabled or not in response to status of checkbox
+void MainWindow::on_checkBox_clicked(bool checked)
+{
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QDateTime local(QDateTime::currentDateTime());
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
+    QString fName = lastfileLoc + "runscript_" + local.toString("ddMMyy_hhmm");
+
+    if (ui->OGButton->isChecked()) fName += ".gcl";
+    else fName += ".py";
+
+    if (checked){
         ui->lineEdit->setEnabled(true);
         ui->toolButton->setEnabled(true);
         ui->saveButton->setEnabled(true);
@@ -1242,57 +431,26 @@ void MainWindow::on_checkBox_clicked()
     }
 }
 
-void MainWindow::on_PySaveCheckBox_clicked()
-{
-    QDateTime local(QDateTime::currentDateTime());
-    QString fileLoc = loadSettings().toString();
-    QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".py";
-
-    if (ui->PySaveCheckBox->isChecked()){
-        ui->PySaveLineEdit->setEnabled(true);
-        ui->PyToolButton->setEnabled(true);
-        ui->PySaveButton->setEnabled(true);
-        ui->PySaveLineEdit->setText(fName);
-    } else {
-        ui->PySaveLineEdit->setEnabled(false);
-        ui->PyToolButton->setEnabled(false);
-        ui->PySaveButton->setEnabled(false);
-    }
-
-}
-
+//"..." opens file Dialog
 void MainWindow::on_toolButton_clicked()
 {
-    SaveToolButtons(OPENGENIE);
-}
-void MainWindow::on_PyToolButton_clicked()
-{
-    SaveToolButtons(PYTHON);
-}
-
-void MainWindow::SaveToolButtons(bool OGorPy){
-
     QDateTime local(QDateTime::currentDateTime());
     QString timestamp = local.toString("ddMMyy_hhmm");
 
-    QString lastfileLoc = loadSettings().toString();
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QString lastfileLoc = loadSettings("lastfileloc", defaultLocation, "savegroup").toString();
 
     QString fName;
-    if (OGorPy == OPENGENIE){
+    if (ui->OGButton->isChecked())
        fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
                         lastfileLoc + "runscript_" + timestamp, tr("GCL files (*.gcl)"));
-        ui->lineEdit->setText(fName);
-    }
-    else{
+    else
         fName = QFileDialog::getSaveFileName(this,tr("Save GCL"), \
-                                                lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
-        ui->PySaveLineEdit->setText(fName);
-    }
-
+                                             lastfileLoc + "runscript_" + timestamp, tr("Python files (*.py)"));
+    ui->lineEdit->setText(fName);
     QString saveloc = fName.left(fName.lastIndexOf("/") + 1);
     saveSettings("lastfileloc", saveloc, "savegroup");
 }
-
 
 void saveSettings(const QString &key, const QVariant &value, const QString &group)
 {
@@ -1302,13 +460,13 @@ void saveSettings(const QString &key, const QVariant &value, const QString &grou
     settings.endGroup();
 }
 
-QVariant loadSettings()
+QVariant loadSettings(const QString &key, const QVariant &defaultValue = QVariant(), const QString &group = "default")
 {
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     QSettings settings;
-    QVariant testloc = settings.value("lastfileloc", defaultLocation);
-
-    return testloc;
+    settings.beginGroup(group);
+    QVariant value = settings.value(key, defaultValue);
+    settings.endGroup();
+    return value;
 }
 
 //makes document with only the most important infos. Need to delete or more clearly distinguish from save().
@@ -1336,34 +494,8 @@ void MainWindow::on_actionSave_Script_triggered()
                 out << QString::number(mySampleTable->sampleList[i].knauer) << "\n";
             }
             out << "#TABLE\n";
-            for(int row = 0; row < ui->tableWidget_1->rowCount(); row++){
-                QComboBox* box1 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,0));
-                QComboBox* box2 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,1));
-                if(box1 && box2){
-                        out << box1->currentText() << "," << box2->currentText(); // which action and which sample etc.
-                    if(box1->currentText() == "contrastchange"){
-                        for(int col = 2; col < 8; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        QComboBox* box3 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,8));
-                        out << "," << box3->currentText();
-                        out << "\n";
-                    } else if(box2->currentText().contains("Julabo Waterbath")){
-                        out << "," << ui->tableWidget_1->item(row,2)->text();
-                        QComboBox* box4 = qobject_cast<QComboBox*>(ui->tableWidget_1->cellWidget(row,3));
-                        out << "," << box4->currentText();
-                        for(int col = 4; col < 9; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        out << "\n";
-                    } else {
-                        for(int col = 2; col < 9; col++){
-                            out << "," << ui->tableWidget_1->item(row,col)->text();
-                        }
-                        out << "\n";
-                    }
-                }
-            }
+
+            //SUMMARIZE COMMaNDS
         }
         file.close();
     }
@@ -1391,6 +523,7 @@ void MainWindow::on_actionSave_Script_triggered()
     }
 }
 
+//??Obtains filename and then executes onactionsavescripttriggered. Not sure how filename is obtained
 void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
@@ -1399,15 +532,15 @@ void MainWindow::on_actionSave_Script_As_triggered()
     on_actionSave_Script_triggered();
 }
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//==================================================SAVE STUFF OVER=====================================================================================================//
-//======================================================================================================================================================================//
-//======================================================================================================================================================================/
+//--------------------------------------------------------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------NOT IN USE------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
 
 
 void MainWindow::on_PythonButton_clicked()
 {
-    pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
+    pyhighlighter = new KickPythonSyntaxHighlighter(ui->plainTextEdit->document());
     writeBackbone();
 }
 
@@ -1423,8 +556,8 @@ void MainWindow::ProgressBar(int secs, int row){
 
 
     bar = new QProgressBar();
-    bar->setMinimumSize(73, ui->tableWidget_1->rowHeight(1));//need this to fill box
-    ui->tableWidget_1->setCellWidget(row,10,bar);
+    //bar->setMinimumSize(73, ui->tableWidget_1->rowHeight(1));//need this to fill box
+   // ui->tableWidget_1->setCellWidget(row,10,bar);
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(updateProgBar(row)));
@@ -1443,18 +576,308 @@ void MainWindow::updateProgBar(int row){
     {
         timer->stop();
         delete timer;
-        ui->tableWidget_1->removeCellWidget(row,10);
+      //  ui->tableWidget_1->removeCellWidget(row,10);
 
-        ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
+        //ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
         QTableWidgetItem *icon_item = new QTableWidgetItem;
 
         icon_item->setIcon(QIcon(":/tick.png"));
-        ui->tableWidget_1->setItem(row, 10, icon_item);
+        //ui->tableWidget_1->setItem(row, 10, icon_item);
 
     }
 
 }
 
+//--------------------------------------------------------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
+//----------------------------------------------TREEVIEW------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------------------------------------------//
+
+
+void MainWindow::initTree(){
+
+    QStringList headers;
+    headers << tr("Action") << tr("Summary of Command");
+    TreeModel *model = new TreeModel(headers);
+    ui->TreeView->setModel(model);
+    view->setAnimated(true);
+
+    ui->TreeView->setDragDropMode(QAbstractItemView::InternalMove);
+    ui->TreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->TreeView->setDragEnabled(true);
+    ui->TreeView->setDragDropOverwriteMode(false);
+    ui->TreeView->setAcceptDrops(true);
+    ui->TreeView->setDropIndicatorShown(true);//doesnt do anything*/
+    ui->TreeView->setDefaultDropAction(Qt::MoveAction);
+
+
+    connect(exitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
+    connect(ui->TreeView->selectionModel(), &QItemSelectionModel::selectionChanged,this, &MainWindow::updateActions);
+    connect(actionsMenu, &QMenu::aboutToShow, this, &MainWindow::updateActions);
+    connect(insertColumnAction, &QAction::triggered, this, &MainWindow::insertColumn);
+    connect(removeRowAction, &QAction::triggered, this, &MainWindow::removeRow);
+    connect(removeColumnAction, &QAction::triggered, this, &MainWindow::removeColumn);
+    //connect(insertChildAction, &QAction::triggered, this, &MainWindow::insertChild);
+   insertChild("Choose a Command...");
+   //connect(insertRowAction, &QAction::triggered, this, &MainWindow::insertRow);
+//on_newCommand_clicked();
+    updateActions();
+
+    ui->TreeView->setItemDelegateForColumn(0, new ComboBoxDelegate(ui->TreeView));
+
+    bool connection = connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)), SLOT(updateComboSlot(QModelIndex)));
+    qDebug() << "MainWindow Connection: " << connection;
+
+    for (int column = 0; column < model->columnCount(); ++column)
+      ui->TreeView->resizeColumnToContents(column);
+}
+
+
+void MainWindow::updateComboSlot(QModelIndex topLeft){
+
+    QVariant newdata = ui->TreeView->model()->data(topLeft);
+    if (newdata == "Choose a Command...") return;
+
+   while (ui->TreeView->model()->hasChildren(topLeft)){
+       ui->TreeView->model()->removeRow(0, topLeft);
+   }
+
+   if (!ui->TreeView->model()->parent(topLeft).isValid() && topLeft.column() == 0){
+       InsertParameters(parameterList(newdata));
+   }
+
+}
+
+QStringList MainWindow::parameterList(QVariant runOption){
+
+    QStringList parameters;
+
+    if (runOption == "Run" || runOption == "Run with SM") {
+        parameters << "Sample#" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1";
+     }
+    else if (runOption == "Run Transmissions"){
+        parameters << "Subtitle" << "uAmps" << "s4vg" << "s3vg" << "s2vg" << "s1vg" << "Height Offset";
+    }
+    else if (runOption == "NIMA Pressure"){
+        parameters << "Target Pressure";
+    }
+    else if (runOption == "NIMA Area"){
+        parameters << "Target Area";
+    }
+    else if (runOption == "Contrast Change"){
+        parameters << "Conc A" << "Volume[mL]" << "Flow[mL/min]" << "Conc D" << "Conc C" << "Conc B";;
+    }
+    else if (runOption == "Julabo"){
+        parameters << "Temperature" << "Run Control Min" << "Run Control Max";
+    }
+    else if (runOption == "Eurotherm"){
+        parameters << "T1" << "T8" << "T7" << "T6" << "T5" << "T4" << "T3" << "T2";
+    }
+    return parameters;
+}
+
+void MainWindow::insertChild(QString ChildTitle)
+{
+    QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
+    QAbstractItemModel *model = ui->TreeView->model();
+
+    if (model->columnCount(index) == 0) {
+        if (!model->insertColumn(0, index))
+            return;
+    }
+
+    if (!model->insertRow(0, index))
+        return;
+
+    //for (int column = 0; column < model->columnCount(index); ++column) {
+        QModelIndex child = model->index(0, 0, index);
+        model->setData(child, QVariant(ChildTitle), Qt::EditRole);
+        //if (!model->headerData(column, Qt::Horizontal).isValid())
+          //  model->setHeaderData(column, Qt::Horizontal, QVariant("[No header]"), Qt::EditRole);
+   //}
+
+    ui->TreeView->selectionModel()->setCurrentIndex(model->index(0, 0, index),
+                                            QItemSelectionModel::ClearAndSelect);
+    updateActions();
+}
+
+
+void MainWindow::on_newCommand_clicked()
+{
+   QAbstractItemModel *model = ui->TreeView->model();
+
+   if (!model->index(0,0).isValid()){ //if table is empty
+       insertChild("Choose a Command...");
+       return;
+   }
+
+   int insertionRow;
+  QModelIndex selectedIndex = ui->TreeView->selectionModel()->currentIndex();
+
+   if (!ui->TreeView->model()->parent(selectedIndex).isValid()){
+           insertionRow = selectedIndex.row()+1;
+            model->insertRow(insertionRow);
+            qDebug() << "I'm in parent";
+   }
+   else{
+       insertionRow = model->rowCount();
+       model->insertRow(insertionRow);
+       qDebug() << "I's in child";
+   }
+
+   QModelIndex child = model->index(insertionRow, 0);
+   model->setData(child, QVariant("Choose a Command..."));
+}
+
+//PROBLEM: this finds the index of what ever is selected (which depends on the user!!) ... is this even a problem?
+void MainWindow::insertRow(QString Action)
+{
+    QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
+    QAbstractItemModel *model = ui->TreeView->model();
+
+    if (!model->insertRow(index.row()+1, index.parent()))//this is where insertion happens
+        return;
+
+    updateActions();
+
+    for (int column = 0; column < model->columnCount(index.parent()); ++column) {
+        QModelIndex child = model->index(index.row()+1, column, index.parent());
+        model->setData(child, QVariant(Action), Qt::EditRole);
+    }
+}
+
+
+bool MainWindow::removeColumn()
+{
+    QAbstractItemModel *model = ui->TreeView->model();
+    int column = ui->TreeView->selectionModel()->currentIndex().column();
+
+    // Insert columns in each child of the parent item.
+    bool changed = model->removeColumn(column);
+
+    if (changed)
+        updateActions();
+
+    return changed;
+}
 
 
 
+//menu bar "Actions"
+void MainWindow::updateActions()
+{
+    bool hasSelection = !ui->TreeView->selectionModel()->selection().isEmpty(); //if nothing is selected, add row/col is disabled since we dont know where to put it
+    removeRowAction->setEnabled(hasSelection);
+    removeColumnAction->setEnabled(hasSelection);
+
+    bool hasCurrent = ui->TreeView->selectionModel()->currentIndex().isValid();
+    insertRowAction->setEnabled(hasCurrent);
+    insertColumnAction->setEnabled(hasCurrent);
+
+    if (hasCurrent) {
+        ui->TreeView->closePersistentEditor(ui->TreeView->selectionModel()->currentIndex());
+
+        int row = ui->TreeView->selectionModel()->currentIndex().row();
+        int column = ui->TreeView->selectionModel()->currentIndex().column();
+        if (ui->TreeView->selectionModel()->currentIndex().parent().isValid())//is valid since it has a parent
+            statusBar()->showMessage(tr("Position: (%1,%2)").arg(row).arg(column));
+        else
+            statusBar()->showMessage(tr("Position: (%1,%2) in top level").arg(row).arg(column));
+    }
+}
+
+void MainWindow::InsertParameters(QStringList parameters){
+
+    //take the first parameter and add it as a child
+    QString parameter = parameters.takeFirst();
+    insertChild(parameter);
+
+    foreach (parameter, parameters){
+        insertRow(parameter);
+    }
+}
+
+
+bool MainWindow::insertColumn()
+{
+    QAbstractItemModel *model = ui->TreeView->model();
+    int column = ui->TreeView->selectionModel()->currentIndex().column();
+
+    // Insert a column in the parent item.
+    bool changed = model->insertColumn(column + 1);
+    if (changed)
+        model->setHeaderData(column + 1, Qt::Horizontal, QVariant("[No header]"), Qt::EditRole);
+
+    updateActions();
+
+    return changed;
+}
+
+void MainWindow::removeRow()
+{
+    on_RemoveCommand_clicked();
+}
+
+
+void MainWindow::parseModel(){
+
+    QVector<QVariant> params;
+    runstruct runvars;
+    QAbstractItemModel *model = ui->TreeView->model();
+
+    QModelIndex childIndex = model->index(0,0, QModelIndex());
+    QModelIndex grandChild = model->index(0,1, childIndex);
+    qDebug() << "Grandchild Data: " << model->data(grandChild).toString();
+    qDebug() << "RootItems Child Count: " << model->rowCount(QModelIndex());
+
+    for (int row = 0; row < model->rowCount(QModelIndex()); row++){
+
+         QModelIndex comboIndex = model->index(row,0, QModelIndex());
+         QString comboSelected = model->data(comboIndex).toString();
+         qDebug() << "Combo Selected: " << comboSelected;
+
+         for (int par = 0; par < model->rowCount(comboIndex); par++){
+
+             QModelIndex parIndex = model->index(par, 1, comboIndex);// 0 for testing
+             QString parameter = model->data(parIndex, Qt::EditRole).toString();
+             qDebug() << "Data: " << parameter;
+
+             params.append(model->data(parIndex, Qt::EditRole));
+         }
+
+         if (comboSelected == "Run")
+            parseRun(params);
+         else if (comboSelected == "Contrast Change")
+            parseContrast(params);
+         else if (comboSelected == "NIMA Pressure")
+             parseNIMA_P(params);
+         else if (comboSelected == "NIMA Area")
+             parseNIMA_A(params);
+         else if (comboSelected == "Eurotherm")
+             parseEurotherm(params);
+         else if (comboSelected == "Julabo")
+             parseJulabo(params);
+         else if (comboSelected == "Run Transmissions")
+             parseTransm(params);
+    }
+}
+
+
+//on collapse and DnD, parse all, print all
+
+
+void MainWindow::on_parseCommands_clicked()
+{
+     parseModel();
+}
+
+void MainWindow::on_removeCommands_clicked()
+{
+    QAbstractItemModel *model = ui->TreeView->model();
+    if (!model->index(0,0).isValid()) return;
+
+    QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
+    if (!ui->TreeView->model()->parent(index).isValid()){
+        if (model->removeRow(index.row(), index.parent()))
+            updateActions();
+}

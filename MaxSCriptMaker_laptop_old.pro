@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     ScriptLines.cpp \
     pyhighlighter.cpp \
     tree_item.cpp \
-    tree_model.cpp
+    tree_model.cpp \
+    comboboxdelegate.cpp
 
 HEADERS  += mainwindow.h \
     sampletable.h \
@@ -33,7 +34,8 @@ HEADERS  += mainwindow.h \
     ScriptLines.h \
     pyhighlighter.h \
     tree_item.h \
-    tree_model.h
+    tree_model.h \
+    comboboxdelegate.h
 
 FORMS    += mainwindow.ui \
     sampletable.ui
