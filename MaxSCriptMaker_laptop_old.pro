@@ -22,14 +22,18 @@ SOURCES += main.cpp\
     GCLHighLighter.cpp \
     translator.cpp \
     ScriptLines.cpp \
-    pyhighlighter.cpp
+    pyhighlighter.cpp \
+    tree_item.cpp \
+    tree_model.cpp
 
 HEADERS  += mainwindow.h \
     sampletable.h \
     GCLHighLighter.h \
     translator.h \
     ScriptLines.h \
-    pyhighlighter.h
+    pyhighlighter.h \
+    tree_item.h \
+    tree_model.h
 
 FORMS    += mainwindow.ui \
     sampletable.ui

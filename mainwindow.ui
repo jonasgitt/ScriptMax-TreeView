@@ -79,7 +79,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="Builder">
        <attribute name="title">
@@ -88,194 +88,14 @@
        <layout class="QGridLayout" name="gridLayout_6">
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="3" column="0" colspan="9">
-           <widget class="QTableWidget" name="tableWidget_1">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>800</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="alternatingRowColors">
-             <bool>true</bool>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>5</width>
-              <height>5</height>
-             </size>
-            </property>
-            <property name="rowCount">
-             <number>100</number>
-            </property>
-            <property name="columnCount">
-             <number>11</number>
-            </property>
-            <attribute name="horizontalHeaderDefaultSectionSize">
-             <number>80</number>
-            </attribute>
-            <attribute name="verticalHeaderDefaultSectionSize">
-             <number>20</number>
-            </attribute>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <row/>
-            <column>
-             <property name="text">
-              <string>Action</string>
-             </property>
-            </column>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-            <column/>
-           </widget>
-          </item>
-          <item row="1" column="7">
-           <widget class="QTimeEdit" name="timeEdit">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
-            </property>
-            <property name="currentSection">
-             <enum>QDateTimeEdit::HourSection</enum>
-            </property>
-            <property name="displayFormat">
-             <string>HH:mm</string>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="removeCommands">
+            <property name="text">
+             <string>Remove Command</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="4">
+          <item row="1" column="6">
            <widget class="QPushButton" name="playButton">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -304,8 +124,11 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="6">
-           <widget class="QLabel" name="label">
+          <item row="1" column="9">
+           <widget class="QTimeEdit" name="timeEdit">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="font">
              <font>
               <pointsize>11</pointsize>
@@ -313,12 +136,24 @@
               <bold>true</bold>
              </font>
             </property>
-            <property name="text">
-             <string>Estimated Run Time:</string>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="currentSection">
+             <enum>QDateTimeEdit::HourSection</enum>
+            </property>
+            <property name="displayFormat">
+             <string>HH:mm</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="5">
+          <item row="1" column="7">
            <spacer name="horizontalSpacer">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -333,6 +168,20 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item row="1" column="8">
+           <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Estimated Run Time:</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="1">
            <spacer name="horizontalSpacer_2">
@@ -350,7 +199,7 @@
             </property>
            </spacer>
           </item>
-          <item row="1" column="3">
+          <item row="1" column="5">
            <widget class="QPushButton" name="pushButton_3">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -376,7 +225,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="8">
+          <item row="1" column="10">
            <widget class="QLabel" name="label_3">
             <property name="font">
              <font>
@@ -391,7 +240,7 @@
            </widget>
           </item>
           <item row="1" column="2">
-           <widget class="QPushButton" name="clearTableButton">
+           <widget class="QPushButton" name="newCommand">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -412,7 +261,7 @@
              </font>
             </property>
             <property name="text">
-             <string>Clear Table</string>
+             <string>New Command</string>
             </property>
             <property name="iconSize">
              <size>
@@ -465,6 +314,44 @@
               <string>SURF</string>
              </property>
             </item>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QPushButton" name="parseCommands">
+            <property name="text">
+             <string>Parse Commands</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="11">
+           <widget class="QTreeView" name="TreeView">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>800</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="alternatingRowColors">
+             <bool>true</bool>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>5</width>
+              <height>5</height>
+             </size>
+            </property>
            </widget>
           </item>
          </layout>

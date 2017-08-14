@@ -13,6 +13,7 @@
 #include "pyhighlighter.h"
 #include <QTimer>
 #include <QProgressBar>
+#include <QModelIndex>
 
 namespace Ui {
 class MainWindow; //variables included in the namespace
@@ -68,6 +69,10 @@ public slots:
     void ShowContextMenu(const QPoint& pos);
     void disableRows();
 
+       //--------------//treeview//-----------------//
+    void updateActions();
+    void updateComboSlot(QModelIndex topLeft);
+       //--------------//treeview//-----------------//
 
 
 private slots:
@@ -105,6 +110,18 @@ private slots:
 
     void on_PySaveButton_clicked();
 
+    //--------------//treeview//-----------------//
+    void insertChild(QString ChildTitle);
+    bool insertColumn();
+    void insertRow(QString Action);
+    bool removeColumn();
+    void removeRow();
+    void on_newCommand_clicked();
+    void on_RemoveCommand_clicked();
+    void on_parseButton_clicked();
+    //--------------//treeview//-----------------//
+
+
 protected slots:
     void onDeviceSelected(int value);
 
@@ -125,6 +142,11 @@ private:
     void ProgressBar(int secs, int row);
     void SaveToolButtons(bool OGorPy);
 
+    //--------------//treeview//-----------------//
+    void InsertParameters(QStringList parameters);
+    QStringList parameterList(QVariant runOption);
+    void parseModel();
+     //--------------//treeview//-----------------//
 
 
 };

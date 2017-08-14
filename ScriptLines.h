@@ -33,6 +33,16 @@ public:
     double heightOffsT, uAmpsT;
 
 };
+
+
+runstruct parseRun(QVector<QVariant>variables);
+runstruct parseContrast(QVector<QVariant>variables);
+runstruct parseTransm(QVector<QVariant>variables);
+runstruct parseNIMA_A(QVector<QVariant>variables);
+runstruct parseNIMA_P(QVector<QVariant>variables);
+runstruct parseJulabo(QVector<QVariant>variables);
+runstruct parseEurotherm(QVector<QVariant>variables);
+
 //OpenGenie Strings
 QString writeSamples(QList<NRSample> samples);
 QString writeRun(runstruct &runvars, bool runSM, bool Python);
