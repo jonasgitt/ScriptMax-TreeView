@@ -23,8 +23,10 @@ class MainWindow; //variables included in the namespace
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-const bool PYTHON = true;
-const bool OPENGENIE = false;
+//const bool PYTHON = true;
+//const bool OPENGENIE = false;
+
+enum {OPENGENIE, PYTHON, WithSM, wait, Pressure, Area, runContr};
 protected:
     void closeEvent(QCloseEvent *event) override;
     
@@ -38,7 +40,6 @@ public:
     QTime runTime;
     QTableWidgetSelectionRange selectedRange() const;
     void save(bool OGorPy);
-    void parseTable();
     void writeBackbone();
     void pyWriteBackbone();
     QString makeLine(QString action, QStringList args);
@@ -61,13 +62,6 @@ public:
 
 
 public slots:
-    void parseTableSlot();
-    void on_actionCopy_triggered();
-    void on_actionPaste_triggered();
-    void on_actionDelete_triggered();
-    void on_actionCut_triggered();
-    void ShowContextMenu(const QPoint& pos);
-    void disableRows();
 
        //--------------//treeview//-----------------//
     void updateComboSlot(QModelIndex topLeft);
@@ -75,13 +69,6 @@ public slots:
 
 
 private slots:
-    void initMainTable();
-    void openSampleTable();
-    void updateSubtitleSlot();
-    void setHeaders(int which);
-    void onRunSelected(int value);
-    void onModeSelected(int value);
-    void runControl(int value);
     void on_checkBox_clicked();
     void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
@@ -89,7 +76,6 @@ private slots:
     void on_actionNew_Script_triggered();
     void on_actionQuit_triggered();
     void on_toolButton_clicked();
-    void on_instrumentCombo_activated(const QString &arg1);
     //void on_OG_checkBox_stateChanged(int arg1);
     //void on_OGcmd_pushButton_clicked();
     void on_actionHow_To_triggered();
@@ -118,15 +104,20 @@ private slots:
     void on_newCommand_clicked();
     void on_removeCommands_clicked();
     void on_parseCommands_clicked();
+    void updateSampleBoxes();
     //--------------//treeview//-----------------//
 
 
+    void on_actionExpand_triggered();
+
+    void on_actionCollapse_triggered();
 
 
 
+    void on_sampleTableButton_clicked();
 
 protected slots:
-    void onDeviceSelected(int value);
+
 
 signals:
     void valueChanged(int newValue);
@@ -149,8 +140,10 @@ private:
     void initTree();
     void InsertParameters(QStringList parameters);
     QStringList parameterList(QVariant runOption);
-    void parseModel();
+    void parseTree();
      //--------------//treeview//-----------------//
+
+    void setSampleComboBox(QModelIndex comboIndex);
 
 
 };

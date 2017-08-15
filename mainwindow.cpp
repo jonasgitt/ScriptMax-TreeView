@@ -41,14 +41,11 @@ MainWindow::MainWindow(QWidget *parent) :
     pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
 
     mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
+
     initTree();
-
-    connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(disableRows()));
-
-    parseTable();
+    parseTree();
 
 }
-
 
 void MainWindow::writeBackbone(){
 
@@ -104,65 +101,6 @@ void MainWindow::pyWriteBackbone(){
     ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 }
 
-void MainWindow::parseTable(){
-
-    //finds all comboboxes that are children of the table
-    //this won't include other comboxes which are themselves children of comboboxes
-
-    QString scriptLine; // a string that temporarily stores info before adding to script
-    int sendingRow;
-
-
-    // initialise run time to 0:
-    runTime = runTime.fromString("00:00", "hh:mm");
-
-    // prepare script header
-    writeBackbone();
-
-    ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-
-
-    //FOR LOOP THROUGH TREE
-        int whatAction = 0; int row;
-        switch(whatAction)
-        {
-            case 0:
-                break;
-            case 1:
-                normalRun(row, false);
-                break;
-            case 2: // run with supermirror
-               { normalRun(row, true);}
-                break;
-            case 3:// run kinetic
-                kineticRun(row);
-                break;
-            case 6: // free OpenGenie command
-                OGcommand(row);
-                break;
-            case 8: // contrastChange
-                {contrastChange(row);
-                break;}
-            case 9:// set temperature
-                setTemp(row);
-                break;
-            case 10: // NIMA control
-                setNIMA(row);
-                break;
-            case 13: // run transmissions
-                runTrans(row);
-                break;
-        }
-
-    samplestoPlainTextEdit();
-    if(ui->checkBox->isChecked()){
-        save(OPENGENIE);
-    }
-    if(ui->PySaveCheckBox->isChecked())
-        save(PYTHON);
-
-}
 //------------------------------------------------------------------------------------------------------------------//
 //------------------------------------------------------------------------------------------------------------------//
 //---------------------------------RUNOPTIONS-----------------------------------------------------------------------//
@@ -189,15 +127,12 @@ void MainWindow::updateRunTime(double angle){
 }
 
 
-void MainWindow::openSampleTable()
+void MainWindow::on_sampleTableButton_clicked()
 {
-//    if(mySampleTable->currentSample > 0){
-        mySampleTable->displaySamples();
+    mySampleTable->displaySamples();
     mySampleTable->show();
 
-
 }
-
 
 //??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
 void MainWindow::on_actionOpen_Script_triggered()
@@ -266,11 +201,11 @@ void MainWindow::on_actionNew_Script_triggered()
       case QMessageBox::Save:
           // Save was clicked
           on_actionSave_Script_triggered();
-          initMainTable();
+          initTree();
           break;
       case QMessageBox::Discard:
           // Don't Save was clicked
-          initMainTable();
+          initTree();
           break;
       case QMessageBox::Cancel:
           // Cancel was clicked
@@ -547,7 +482,7 @@ void MainWindow::on_actionSave_Script_triggered()
           case QMessageBox::Save:
               // Save was clicked
               on_actionSave_Script_As_triggered();
-              initMainTable();
+              initTree();
               break;
           case QMessageBox::Cancel:
               // Cancel was clicked
@@ -631,7 +566,7 @@ void MainWindow::updateProgBar(int row){
 void MainWindow::initTree(){
 
     QStringList headers;
-    headers << tr("Action") << tr("Summary of Command");
+    headers << tr("Action") << tr("Summary of Command") << tr("Further Information");
     TreeModel *model = new TreeModel(headers);
     ui->TreeView->setModel(model);
     ui->TreeView->setAnimated(true);
@@ -650,10 +585,12 @@ void MainWindow::initTree(){
     ui->TreeView->setItemDelegateForColumn(0, new ComboBoxDelegate(ui->TreeView));
 
     bool connection = connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)), SLOT(updateComboSlot(QModelIndex)));
-    qDebug() << "MainWindow Connection: " << connection;
+    bool connekt = connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(updateSampleBoxes()));
+    qDebug() << "MainWindow Connections: " << connection << connekt;
 
-    for (int column = 0; column < model->columnCount(); ++column)
-      ui->TreeView->resizeColumnToContents(column);
+
+      ui->TreeView->resizeColumnToContents(0);
+      ui->TreeView->setColumnWidth(1, 150);//dont work
 }
 
 
@@ -677,7 +614,7 @@ QStringList MainWindow::parameterList(QVariant runOption){
     QStringList parameters;
 
     if (runOption == "Run" || runOption == "Run with SM") {
-        parameters << "Sample#" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1";
+        parameters << "Sample" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1";
      }
     else if (runOption == "Run Transmissions"){
         parameters << "Subtitle" << "uAmps" << "s4vg" << "s3vg" << "s2vg" << "s1vg" << "Height Offset";
@@ -700,6 +637,19 @@ QStringList MainWindow::parameterList(QVariant runOption){
     return parameters;
 }
 
+void MainWindow::InsertParameters(QStringList parameters){
+
+    //take the first parameter and add it as a child
+    if (parameters.isEmpty()) return;
+
+    QString parameter = parameters.takeFirst();
+    insertChild(parameter);
+
+    foreach (parameter, parameters){
+        insertRow(parameter);
+    }
+}
+
 void MainWindow::insertChild(QString ChildTitle)
 {
     QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
@@ -712,19 +662,41 @@ void MainWindow::insertChild(QString ChildTitle)
 
     if (!model->insertRow(0, index))
         return;
+    QModelIndex child = model->index(0, 0, index);
+    model->setData(child, QVariant(ChildTitle), Qt::EditRole);
 
-    //for (int column = 0; column < model->columnCount(index); ++column) {
-        QModelIndex child = model->index(0, 0, index);
-        model->setData(child, QVariant(ChildTitle), Qt::EditRole);
-        //if (!model->headerData(column, Qt::Horizontal).isValid())
-          //  model->setHeaderData(column, Qt::Horizontal, QVariant("[No header]"), Qt::EditRole);
-   //}
+    if(ChildTitle == "Sample")
+        setSampleComboBox(model->index(0, 1, index));
 
     ui->TreeView->selectionModel()->setCurrentIndex(model->index(0, 0, index),
                                             QItemSelectionModel::ClearAndSelect);
 
 }
 
+void MainWindow::setSampleComboBox(QModelIndex comboIndex){
+
+    QStringList samples;
+
+    for (int i = 0; i < mySampleTable->sampleList.length(); i++){
+        samples << mySampleTable->sampleList[i].title;
+    }
+    QComboBox *SampleBox = new QComboBox();
+    SampleBox->addItems(samples);
+    ui->TreeView->setIndexWidget(comboIndex, SampleBox);
+}
+
+void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
+
+    QAbstractItemModel *model = ui->TreeView->model();
+  for (int row = 0; row < model->rowCount(); row++){
+
+      QModelIndex RowIndex = model->index(row,0, QModelIndex());
+        QModelIndex comboIndex = model->index(row, 1, RowIndex);
+      if (model->data(RowIndex).toString() == "Run"){
+          setSampleComboBox(comboIndex);
+        }
+    }
+}
 
 void MainWindow::on_newCommand_clicked()
 {
@@ -762,9 +734,7 @@ void MainWindow::insertRow(QString Action)
     if (!model->insertRow(index.row()+1, index.parent()))//this is where insertion happens
         return;
 
-
-
-    for (int column = 0; column < model->columnCount(index.parent()); ++column) {
+    for (int column = 0; column < 2; ++column) {
         QModelIndex child = model->index(index.row()+1, column, index.parent());
         model->setData(child, QVariant(Action), Qt::EditRole);
     }
@@ -782,16 +752,6 @@ bool MainWindow::removeColumn()
     return changed;
 }
 
-void MainWindow::InsertParameters(QStringList parameters){
-
-    //take the first parameter and add it as a child
-    QString parameter = parameters.takeFirst();
-    insertChild(parameter);
-
-    foreach (parameter, parameters){
-        insertRow(parameter);
-    }
-}
 
 
 bool MainWindow::insertColumn()
@@ -813,8 +773,19 @@ void MainWindow::removeRow()
     on_removeCommands_clicked();
 }
 
+//need to update runtime for run and runtrans
+//use enums instead of true/false
+void MainWindow::parseTree(){
 
-void MainWindow::parseModel(){
+    // initialise run time to 0:
+    runTime = runTime.fromString("00:00", "hh:mm");
+
+    // prepare script header
+    writeBackbone();
+
+    ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+
 
     QVector<QVariant> params;
     runstruct runvars;
@@ -840,21 +811,54 @@ void MainWindow::parseModel(){
              params.append(model->data(parIndex, Qt::EditRole));
          }
 
-         if (comboSelected == "Run")
-            parseRun(params);
-         else if (comboSelected == "Contrast Change")
-            parseContrast(params);
-         else if (comboSelected == "NIMA Pressure")
-             parseNIMA_P(params);
-         else if (comboSelected == "NIMA Area")
-             parseNIMA_A(params);
-         else if (comboSelected == "Eurotherm")
-             parseEurotherm(params);
-         else if (comboSelected == "Julabo")
-             parseJulabo(params);
-         else if (comboSelected == "Run Transmissions")
-             parseTransm(params);
+         if (comboSelected == "Run"){
+            runstruct runvars = parseRun(params);
+            ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
+            ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+         }
+         else if (comboSelected == "Run with SM"){
+            runstruct runvars = parseRun(params);
+            ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
+            ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
+         }
+         else if (comboSelected == "Contrast Change"){
+             runstruct runvars = parseContrast(params);
+             ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
+             ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));//use enum wait
+          }
+         else if (comboSelected == "NIMA Pressure"){
+             runstruct runvars = parseNIMA_P(params);
+             ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
+             ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
+          }
+         else if (comboSelected == "NIMA Area"){
+             runstruct runvars = parseNIMA_A(params);
+             ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
+             ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
+          }
+         else if (comboSelected == "Eurotherm"){
+             runstruct runvars = parseEurotherm(params);
+             ui->plainTextEdit->insertPlainText(writeEuro(runvars));
+             ui->PyScriptBox->insertPlainText(writeEuro(runvars));
+          }
+         else if (comboSelected == "Julabo"){
+             runstruct runvars = parseJulabo(params);
+             ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
+             ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0)); //is this python compatible?
+          }
+         else if (comboSelected == "Run Transmissions"){
+             runstruct runvars = parseTransm(params);
+             ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
+             ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
+          }
     }
+
+    samplestoPlainTextEdit();
+    if(ui->checkBox->isChecked()){
+        save(OPENGENIE);
+    }
+    if(ui->PySaveCheckBox->isChecked())
+        save(PYTHON);
 }
 
 
@@ -863,7 +867,7 @@ void MainWindow::parseModel(){
 
 void MainWindow::on_parseCommands_clicked()
 {
-     parseModel();
+     parseTree();
 }
 
 void MainWindow::on_removeCommands_clicked()
@@ -877,4 +881,17 @@ void MainWindow::on_removeCommands_clicked()
             qDebug() << "FIx this";
 }
 }
+
+
+
+void MainWindow::on_actionExpand_triggered()
+{
+    ui->TreeView->expandAll();
+}
+
+void MainWindow::on_actionCollapse_triggered()
+{
+    ui->TreeView->collapseAll();
+}
+
 

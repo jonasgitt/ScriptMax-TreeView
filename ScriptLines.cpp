@@ -60,13 +60,13 @@ QString writeSamples(QList<NRSample> samples){
     for (int i=0; i < samples.length(); i++){
        scriptLine += "sample[" + QString::number(i+1) + "]=s" + QString::number(i+1) + "; ";
     }
-
+    scriptLine +=  + "\n";
     return scriptLine;
 
 }
 
 
-QString writeRun(runstruct &runvars, bool runSM, bool Python){
+QString writeRun(runstruct &runvars, int runSM, bool Python){
 
     QString scriptLine;
 
@@ -93,7 +93,7 @@ QString writeRun(runstruct &runvars, bool runSM, bool Python){
     return scriptLine;
 }
 
-QString writeContrast(runstruct runvars, bool wait, bool Python){
+QString writeContrast(runstruct &runvars, int wait, bool Python){
 
     QString scriptLine;
 
@@ -111,13 +111,13 @@ QString writeContrast(runstruct runvars, bool wait, bool Python){
     }
 
     scriptLine += QString::number(runvars.flow);
-    scriptLine += ", " + QString::number(runvars.volume) + ")";
+    scriptLine += ", " + QString::number(runvars.volume) + ")"  + "\n";
 
     return scriptLine;
 
 }
 
-QString writeJulabo(runstruct runvars, int runcont){
+QString writeJulabo(runstruct &runvars, int runcont){
     QString scriptLine;
 
      if(runcont){
@@ -127,35 +127,36 @@ QString writeJulabo(runstruct runvars, int runcont){
      }
 
      else scriptLine = "CSET /nocontrol Julabo_WB=" + QString::number(runvars.JTemp);
-
+     scriptLine += "\n";
      return scriptLine;
 }
 
-QString writeEuro(runstruct runvars){
+QString writeEuro(runstruct &runvars){
     QString scriptLine;
     scriptLine = "CSET";
 
     for(int i=0; i<9; i++){
         scriptLine += " temp" + QString::number(i) + "=" + QString::number(runvars.euroTemps[i]);
     }
+    scriptLine += "\n";
     return scriptLine;
 }
 
-QString writeNIMA(runstruct runvars, bool Pressure, bool Python){
+QString writeNIMA(runstruct &runvars, int mode, bool Python){
 
     QString scriptLine;
 
-    if (Pressure)
-        if (!Python) scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure);
-        else scriptLine = "\tgoToPressure(" + QString::number(runvars.pressure) + ")";
+    if (mode == 4)
+        if (!Python) scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure) + "\n";
+        else scriptLine = "\tgoToPressure(" + QString::number(runvars.pressure) + ")\n";
     else
-        if (!Python) scriptLine = "CSET target_area = " + QString::number(runvars.area);
-        else scriptLine = "\tgoToArea(" + QString::number(runvars.area) + ")";
+        if (!Python) scriptLine = "CSET target_area = " + QString::number(runvars.area) + "\n";
+        else scriptLine = "\tgoToArea(" + QString::number(runvars.area) + ")\n";
 
     return scriptLine;
 }
 
-QString writeTransm(runstruct runvars, bool Python){
+QString writeTransm(runstruct &runvars, bool Python){
 
     QString scriptLine;
 
@@ -166,11 +167,11 @@ QString writeTransm(runstruct runvars, bool Python){
     }
     else
         scriptLine = "\ttransmission(sample[" + runvars.sampNum + "] ,\"" + runvars.sampName + "\"";
-    for (int i = 0; i < 3; i++){
+    for (int i = 0; i < 4; i++){
         scriptLine += "," + QString::number(runvars.angles[i]);
     }
 
-    scriptLine += "," + QString::number(runvars.uAmpsT) + ")";
+    scriptLine += "," + QString::number(runvars.uAmpsT) + ")"  + "\n";
     return scriptLine;
 }
 
@@ -219,7 +220,7 @@ runstruct parseTransm(QVector<QVariant>variables){
     for (int i = 2; i < 6; i++){
         runvars.angles[i-2] = variables[i].toDouble();
     }
-
+    runvars.uAmpsT = variables[6].toDouble();
     return runvars;
 }
 

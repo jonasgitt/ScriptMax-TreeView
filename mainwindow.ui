@@ -79,7 +79,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="Builder">
        <attribute name="title">
@@ -124,35 +124,6 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="9">
-           <widget class="QTimeEdit" name="timeEdit">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::NoButtons</enum>
-            </property>
-            <property name="currentSection">
-             <enum>QDateTimeEdit::HourSection</enum>
-            </property>
-            <property name="displayFormat">
-             <string>HH:mm</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="7">
            <spacer name="horizontalSpacer">
             <property name="orientation">
@@ -183,6 +154,35 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="9">
+           <widget class="QTimeEdit" name="timeEdit">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="currentSection">
+             <enum>QDateTimeEdit::HourSection</enum>
+            </property>
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <spacer name="horizontalSpacer_2">
             <property name="orientation">
@@ -198,46 +198,6 @@
              </size>
             </property>
            </spacer>
-          </item>
-          <item row="1" column="5">
-           <widget class="QPushButton" name="pushButton_3">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>160</width>
-              <height>30</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>View/Edit Samples</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="10">
-           <widget class="QLabel" name="label_3">
-            <property name="font">
-             <font>
-              <pointsize>11</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>h</string>
-            </property>
-           </widget>
           </item>
           <item row="1" column="2">
            <widget class="QPushButton" name="newCommand">
@@ -268,6 +228,53 @@
               <width>25</width>
               <height>25</height>
              </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="10">
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>h</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QPushButton" name="sampleTableButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>160</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Edit Samples</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QPushButton" name="parseCommands">
+            <property name="text">
+             <string>Parse Commands</string>
             </property>
            </widget>
           </item>
@@ -314,13 +321,6 @@
               <string>SURF</string>
              </property>
             </item>
-           </widget>
-          </item>
-          <item row="1" column="4">
-           <widget class="QPushButton" name="parseCommands">
-            <property name="text">
-             <string>Parse Commands</string>
-            </property>
            </widget>
           </item>
           <item row="3" column="0" colspan="11">
@@ -690,6 +690,8 @@
    <addaction name="actionCut"/>
    <addaction name="actionCopy"/>
    <addaction name="actionPaste"/>
+   <addaction name="actionExpand"/>
+   <addaction name="actionCollapse"/>
   </widget>
   <action name="actionOpen_Script">
    <property name="text">
@@ -797,6 +799,36 @@
   <action name="actionHow_To">
    <property name="text">
     <string>How To</string>
+   </property>
+  </action>
+  <action name="actionExpand">
+   <property name="icon">
+    <iconset resource="ScriptMax_resource.qrc">
+     <normaloff>:/chevron.png</normaloff>:/chevron.png</iconset>
+   </property>
+   <property name="text">
+    <string>Expand</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Expand all Branches (Alt Z)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Z</string>
+   </property>
+  </action>
+  <action name="actionCollapse">
+   <property name="icon">
+    <iconset resource="ScriptMax_resource.qrc">
+     <normaloff>:/collapse.png</normaloff>:/collapse.png</iconset>
+   </property>
+   <property name="text">
+    <string>Collapse</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Collapse all Branches (Alt X)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+X</string>
    </property>
   </action>
  </widget>
