@@ -835,6 +835,7 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
     }
    else if (command == "Contrast Change"){
      runvars = parseContrast(params);
+     //runvars.knauer = mySampleTable->sampleList[].knauer;
        ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
        ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));//use enum wait
     }
