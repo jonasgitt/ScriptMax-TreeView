@@ -581,7 +581,6 @@ void MainWindow::initTree(){
 
    insertChild("Choose a Command...");
 
-
     ui->TreeView->setItemDelegateForColumn(0, new ComboBoxDelegate(ui->TreeView));
 
     bool connection = connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>)), SLOT(updateComboSlot(QModelIndex)));
@@ -595,6 +594,9 @@ void MainWindow::initTree(){
 
 
 void MainWindow::updateComboSlot(QModelIndex topLeft){
+
+    if (topLeft.column() != 0)
+        return;
 
     QVariant newdata = ui->TreeView->model()->data(topLeft);
     if (newdata == "Choose a Command...") return;
@@ -663,6 +665,7 @@ void MainWindow::insertChild(QString ChildTitle)
     if (!model->insertRow(0, index))
         return;
     QModelIndex child = model->index(0, 0, index);
+
     model->setData(child, QVariant(ChildTitle), Qt::EditRole);
 
     if(ChildTitle == "Sample")
@@ -823,14 +826,6 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
 
    if (command == "Run" || command == "Run with SM"){
       runvars = parseRun(params);
-      if (command == "Run with SM"){
-          ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
-          ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
-      }
-       else {
-          ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
-          ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
-        }
     }
    else if (command == "NIMA Pressure"){
       runvars = parseNIMA_P(params);
@@ -860,6 +855,9 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
    else if (command == "Contrast Change"){
      runvars = parseContrast(params);
    }
+
+   //These three had to be split since running runvars.sampNum BEFORE would have been overwritten by parse functions
+   //could solve this by simply passing the runstruct as a parameter rather than returning it
    if (!params.isEmpty())
         runvars.sampNum =  findSampNum(params[0].toString());
    if (command == "Contrast Change"){
@@ -867,15 +865,24 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
          ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
          ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
    }
+   else if (command == "Run with SM"){
+       ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
+       ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
+   }
+   else if (command == "Run"){
+       ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
+       ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+     }
 }
 
 QString MainWindow::findSampNum(QString sampName){
     for (int i = 0; i < mySampleTable->sampleList.size(); i++){
         if (sampName == mySampleTable->sampleList[i].title){
-            qDebug() << "Returning Sampnum: " << i+1;
+            qDebug() << "sampnum: " << QString::number(i+1);
             return QString::number(i+1);
     }
         }
+    qDebug() << "no luck";
     return "error";
 }
 

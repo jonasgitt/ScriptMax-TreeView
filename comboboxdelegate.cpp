@@ -22,6 +22,7 @@ QWidget *ComboBoxDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 
     if (!index.parent().isValid())
       return editor;
+
 }
 
 //A new editor is created every time comobobox is clicked

@@ -57,6 +57,7 @@ public slots:
 private:
     Ui::SampleTable *ui;
     void emit_closeSignal();
+    bool areyousure();
 signals:
     void closedSampWindow();
 private slots:

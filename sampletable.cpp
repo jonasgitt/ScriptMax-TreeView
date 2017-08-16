@@ -174,10 +174,7 @@ void SampleTable::updateSamplesSlot(){
     }
 
 }
-void SampleTable::closeEvent(QCloseEvent *event)
-{
-    emit closedSampWindow();
-}
+
 
 QTableWidgetSelectionRange SampleTable::selectedRange() const
 {
@@ -266,6 +263,50 @@ SampleTable::~SampleTable()
 
 void SampleTable::on_actionSave_and_Close_triggered()
 {
+
+    this->close();
     //To do...
     //emit closed sampwindow, save, parse sampletable?
+}
+
+void SampleTable::closeEvent(QCloseEvent *event)
+{
+    if (areyousure()) {
+            event->accept();
+            emit closedSampWindow();
+        } else {
+            event->ignore();
+        }
+}
+//NEEDS FIXING!
+bool SampleTable::areyousure()
+{
+    /*
+    bool missing = false;
+    for (int row = 0; row < sampleList.length(); row++){
+        qDebug() << "row: " << row;
+        for (int col = 0; col < ui->tableWidget->columnCount(); col++){
+            if(ui->tableWidget->item(row,col)->text().isEmpty()){
+             qDebug() << "somethings missing";   missing = true;
+            }
+        }
+    }
+    if (missing == false)
+        return true;
+qDebug() << "Has it not returned??";
+    const QMessageBox::StandardButton ret
+        = QMessageBox::warning(this, tr("Sample Table"),
+                               tr("You missed something!\n"
+                                  "Are you sure you want to leave?"),
+                               QMessageBox::Yes | QMessageBox::Cancel);
+    switch (ret) {
+    case QMessageBox::Yes:
+        return true;
+    case QMessageBox::Cancel:
+        return false;
+    default:
+        break;
+    }*/
+    return true;
+
 }
