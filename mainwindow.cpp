@@ -690,9 +690,10 @@ void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
     QAbstractItemModel *model = ui->TreeView->model();
   for (int row = 0; row < model->rowCount(); row++){
 
-      QModelIndex RowIndex = model->index(row,0, QModelIndex());
-        QModelIndex comboIndex = model->index(row, 1, RowIndex);
-      if (model->data(RowIndex).toString() == "Run"){
+       QModelIndex RowIndex = model->index(row,0, QModelIndex()); //parent row
+       QModelIndex comboIndex = model->index(0, 1, RowIndex); //
+      QString option = model->data(RowIndex).toString();
+        if (option == "Run"|| option == "Run with SM"){
           setSampleComboBox(comboIndex);
         }
     }
@@ -713,12 +714,10 @@ void MainWindow::on_newCommand_clicked()
    if (!ui->TreeView->model()->parent(selectedIndex).isValid()){
            insertionRow = selectedIndex.row()+1;
             model->insertRow(insertionRow);
-            qDebug() << "I'm in parent";
    }
    else{
        insertionRow = model->rowCount();
        model->insertRow(insertionRow);
-       qDebug() << "I's in child";
    }
 
    QModelIndex child = model->index(insertionRow, 0);
@@ -777,80 +776,32 @@ void MainWindow::removeRow()
 //use enums instead of true/false
 void MainWindow::parseTree(){
 
-    // initialise run time to 0:
     runTime = runTime.fromString("00:00", "hh:mm");
 
-    // prepare script header
     writeBackbone();
 
     ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
-
     QVector<QVariant> params;
-    runstruct runvars;
-    QAbstractItemModel *model = ui->TreeView->model();
 
-    QModelIndex childIndex = model->index(0,0, QModelIndex());
-    QModelIndex grandChild = model->index(0,1, childIndex);
-    qDebug() << "Grandchild Data: " << model->data(grandChild).toString();
-    qDebug() << "RootItems Child Count: " << model->rowCount(QModelIndex());
+    QAbstractItemModel *model = ui->TreeView->model();
 
     for (int row = 0; row < model->rowCount(QModelIndex()); row++){
 
          QModelIndex comboIndex = model->index(row,0, QModelIndex());
          QString comboSelected = model->data(comboIndex).toString();
-         qDebug() << "Combo Selected: " << comboSelected;
 
          for (int par = 0; par < model->rowCount(comboIndex); par++){
 
-             QModelIndex parIndex = model->index(par, 1, comboIndex);// 0 for testing
-             QString parameter = model->data(parIndex, Qt::EditRole).toString();
-             qDebug() << "Data: " << parameter;
+             QModelIndex parIndex = model->index(par, 1, comboIndex);
 
-             params.append(model->data(parIndex, Qt::EditRole));
+             if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(parIndex)))
+                params.append(readCombobox(parIndex));
+             else
+                  params.append(model->data(parIndex, Qt::EditRole));
          }
-
-         if (comboSelected == "Run"){
-            runstruct runvars = parseRun(params);
-            ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
-            ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
-         }
-         else if (comboSelected == "Run with SM"){
-            runstruct runvars = parseRun(params);
-            ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
-            ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
-         }
-         else if (comboSelected == "Contrast Change"){
-             runstruct runvars = parseContrast(params);
-             ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
-             ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));//use enum wait
-          }
-         else if (comboSelected == "NIMA Pressure"){
-             runstruct runvars = parseNIMA_P(params);
-             ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
-             ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
-          }
-         else if (comboSelected == "NIMA Area"){
-             runstruct runvars = parseNIMA_A(params);
-             ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
-             ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
-          }
-         else if (comboSelected == "Eurotherm"){
-             runstruct runvars = parseEurotherm(params);
-             ui->plainTextEdit->insertPlainText(writeEuro(runvars));
-             ui->PyScriptBox->insertPlainText(writeEuro(runvars));
-          }
-         else if (comboSelected == "Julabo"){
-             runstruct runvars = parseJulabo(params);
-             ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
-             ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0)); //is this python compatible?
-          }
-         else if (comboSelected == "Run Transmissions"){
-             runstruct runvars = parseTransm(params);
-             ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
-             ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
-          }
+          printCommands(comboSelected, params);
     }
 
     samplestoPlainTextEdit();
@@ -861,8 +812,68 @@ void MainWindow::parseTree(){
         save(PYTHON);
 }
 
+QString MainWindow::readCombobox(QModelIndex index){
+    QComboBox* box = qobject_cast<QComboBox*>(ui->TreeView->indexWidget(index));
+    return box->currentText();
+}
 
-//on collapse and DnD, parse all, print all
+void MainWindow::printCommands(QString command, QVector<QVariant> &params){
+
+   runstruct runvars;
+
+   if (command == "Run" || command == "Run with SM"){
+      runvars = parseRun(params);
+      runvars.sampNum =  findSampNum(params[0].toString());
+      if (command == "Run with SM"){
+          ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
+          ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
+      }
+       else {
+          ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
+          ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+        }
+    }
+   else if (command == "Contrast Change"){
+     runvars = parseContrast(params);
+       ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
+       ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));//use enum wait
+    }
+   else if (command == "NIMA Pressure"){
+      runvars = parseNIMA_P(params);
+       ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
+       ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
+    }
+   else if (command == "NIMA Area"){
+       runvars = parseNIMA_A(params);
+       ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
+       ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
+    }
+   else if (command == "Eurotherm"){
+        runvars = parseEurotherm(params);
+       ui->plainTextEdit->insertPlainText(writeEuro(runvars));
+       ui->PyScriptBox->insertPlainText(writeEuro(runvars));
+    }
+   else if (command == "Julabo"){
+         runvars = parseJulabo(params);
+       ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
+       ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0)); //is this python compatible?
+    }
+   else if (command == "Run Transmissions"){
+         runvars = parseTransm(params);
+       ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
+       ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
+    }
+}
+
+QString MainWindow::findSampNum(QString sampName){
+    for (int i = 0; i < mySampleTable->sampleList.size(); i++){
+        if (sampName == mySampleTable->sampleList[i].title){
+            qDebug() << "Returning Sampnum: " << i+1;
+            return QString::number(i+1);
+    }
+        }
+    return "error";
+}
 
 
 void MainWindow::on_parseCommands_clicked()

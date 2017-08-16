@@ -59,6 +59,9 @@ public:
 
     void samplestoPlainTextEdit();
 
+    QString findSampNum(QString sampName);
+    void printCommands(QString command, QVector<QVariant> &params);
+
 
 
 public slots:
@@ -144,7 +147,7 @@ private:
      //--------------//treeview//-----------------//
 
     void setSampleComboBox(QModelIndex comboIndex);
-
+    QString readCombobox(QModelIndex index);
 
 };
 

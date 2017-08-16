@@ -181,7 +181,7 @@ runstruct parseRun(QVector<QVariant>variables){
 
     runstruct runvars;
 
-    runvars.sampNum = variables[0].toInt();
+    runvars.sampName = variables[0].toString();//0 is now the name - not the number
 
     runvars.angles[0] = variables[1].toDouble();
     runvars.uAmps[0] = variables[2].toDouble();
