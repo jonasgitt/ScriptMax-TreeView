@@ -617,7 +617,7 @@ QStringList MainWindow::parameterList(QVariant runOption){
         parameters << "Sample" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1";
      }
     else if (runOption == "Run Transmissions"){
-        parameters << "Subtitle" << "uAmps" << "s4vg" << "s3vg" << "s2vg" << "s1vg" << "Height Offset";
+        parameters << "Sample" << "uAmps" << "s4vg" << "s3vg" << "s2vg" << "s1vg" << "Height Offset" << "Subtitle";
     }
     else if (runOption == "NIMA Pressure"){
         parameters << "Target Pressure";
@@ -626,7 +626,7 @@ QStringList MainWindow::parameterList(QVariant runOption){
         parameters << "Target Area";
     }
     else if (runOption == "Contrast Change"){
-        parameters << "Conc A" << "Volume[mL]" << "Flow[mL/min]" << "Conc D" << "Conc C" << "Conc B";;
+        parameters << "Sample" << "Volume[mL]" << "Flow[mL/min]" << "Conc D" << "Conc C" << "Conc B" << "Conc A";
     }
     else if (runOption == "Julabo"){
         parameters << "Temperature" << "Run Control Min" << "Run Control Max";
@@ -693,7 +693,7 @@ void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
        QModelIndex RowIndex = model->index(row,0, QModelIndex()); //parent row
        QModelIndex comboIndex = model->index(0, 1, RowIndex); //
       QString option = model->data(RowIndex).toString();
-        if (option == "Run"|| option == "Run with SM"){
+        if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(comboIndex))){
           setSampleComboBox(comboIndex);
         }
     }
@@ -823,7 +823,6 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
 
    if (command == "Run" || command == "Run with SM"){
       runvars = parseRun(params);
-      runvars.sampNum =  findSampNum(params[0].toString());
       if (command == "Run with SM"){
           ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
           ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
@@ -832,12 +831,6 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
           ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
           ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
         }
-    }
-   else if (command == "Contrast Change"){
-     runvars = parseContrast(params);
-     //runvars.knauer = mySampleTable->sampleList[].knauer;
-       ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
-       ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));//use enum wait
     }
    else if (command == "NIMA Pressure"){
       runvars = parseNIMA_P(params);
@@ -864,6 +857,16 @@ void MainWindow::printCommands(QString command, QVector<QVariant> &params){
        ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
        ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
     }
+   else if (command == "Contrast Change"){
+     runvars = parseContrast(params);
+   }
+   if (!params.isEmpty())
+        runvars.sampNum =  findSampNum(params[0].toString());
+   if (command == "Contrast Change"){
+        runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer;
+         ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
+         ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
+   }
 }
 
 QString MainWindow::findSampNum(QString sampName){
