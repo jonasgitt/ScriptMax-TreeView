@@ -23,10 +23,9 @@ class MainWindow; //variables included in the namespace
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-//const bool PYTHON = true;
-//const bool OPENGENIE = false;
 
 enum {OPENGENIE, PYTHON, WithSM, wait, Pressure, Area, runContr};
+
 protected:
     void closeEvent(QCloseEvent *event) override;
     
@@ -46,21 +45,13 @@ public:
     ~MainWindow();
 
     void defineSamples();
-    //outsourced cases
-    void normalRun(int row, bool runSM);
-    void kineticRun(int row);
-    void OGcommand(int row);
-    void contrastChange(int row);
-    void setTemp(int row);
-    void setNIMA(int row);
-    void runTrans(int row);
 
     void updateRunTime(double angle);
 
     void samplestoPlainTextEdit();
 
     QString findSampNum(QString sampName);
-    void printCommands(QString command, QVector<QVariant> &params);
+    void printCommands(QString command, QVector<QVariant> params);
 
 
 
@@ -79,8 +70,6 @@ private slots:
     void on_actionNew_Script_triggered();
     void on_actionQuit_triggered();
     void on_toolButton_clicked();
-    //void on_OG_checkBox_stateChanged(int arg1);
-    //void on_OGcmd_pushButton_clicked();
     void on_actionHow_To_triggered();
     void on_actionAbout_ScriptMax_triggered();
     void on_clearTableButton_clicked();
@@ -119,16 +108,8 @@ private slots:
 
     void on_sampleTableButton_clicked();
 
-protected slots:
-
-
-signals:
-    void valueChanged(int newValue);
-    void tableModified(int tableNumber);
 
 private:
-    QSignalMapper* signalMapper;
-    //SampleForm *mySampleForm;
     Highlighter* OGhighlighter;
     KickPythonSyntaxHighlighter* pyhighlighter;
     QTimer *timer;
@@ -144,6 +125,7 @@ private:
     void InsertParameters(QStringList parameters);
     QStringList parameterList(QVariant runOption);
     void parseTree();
+    QVector<QVariant> getChildData(int parentRow);
      //--------------//treeview//-----------------//
 
     void setSampleComboBox(QModelIndex comboIndex);

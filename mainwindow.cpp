@@ -587,8 +587,9 @@ void MainWindow::initTree(){
     bool connekt = connect(mySampleTable,SIGNAL(closedSampWindow()), SLOT(updateSampleBoxes()));
     qDebug() << "MainWindow Connections: " << connection << connekt;
 
-
-      ui->TreeView->resizeColumnToContents(0);
+    ui->TreeView->setEditTriggers(QAbstractItemView::AnyKeyPressed);
+    ui->TreeView->setEditTriggers(QAbstractItemView::DoubleClicked);
+    ui->TreeView->resizeColumnToContents(0);
       ui->TreeView->setColumnWidth(1, 150);//dont work
 }
 
@@ -776,7 +777,6 @@ void MainWindow::removeRow()
 }
 
 //need to update runtime for run and runtrans
-//use enums instead of true/false
 void MainWindow::parseTree(){
 
     runTime = runTime.fromString("00:00", "hh:mm");
@@ -786,25 +786,12 @@ void MainWindow::parseTree(){
     ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
-    QVector<QVariant> params;
-
     QAbstractItemModel *model = ui->TreeView->model();
 
     for (int row = 0; row < model->rowCount(QModelIndex()); row++){
-
-         QModelIndex comboIndex = model->index(row,0, QModelIndex());
+        QModelIndex comboIndex = model->index(row,0, QModelIndex());
          QString comboSelected = model->data(comboIndex).toString();
-
-         for (int par = 0; par < model->rowCount(comboIndex); par++){
-
-             QModelIndex parIndex = model->index(par, 1, comboIndex);
-
-             if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(parIndex)))
-                params.append(readCombobox(parIndex));
-             else
-                  params.append(model->data(parIndex, Qt::EditRole));
-         }
-          printCommands(comboSelected, params);
+         printCommands(comboSelected, getChildData(row));
     }
 
     samplestoPlainTextEdit();
@@ -815,12 +802,33 @@ void MainWindow::parseTree(){
         save(PYTHON);
 }
 
+QVector<QVariant> MainWindow::getChildData(int parentRow){
+
+    QAbstractItemModel *model = ui->TreeView->model();
+    QVector<QVariant> data;
+    QModelIndex comboIndex = model->index(parentRow,0, QModelIndex());//come along
+
+    for (int childRow = 0; childRow < model->rowCount(comboIndex); childRow++){
+
+        QModelIndex parIndex = model->index(childRow, 1, comboIndex);
+
+        if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(parIndex)))
+           data.append(readCombobox(parIndex));
+        else
+           data.append(model->data(parIndex, Qt::EditRole));
+    }
+    return data;
+}
+
 QString MainWindow::readCombobox(QModelIndex index){
     QComboBox* box = qobject_cast<QComboBox*>(ui->TreeView->indexWidget(index));
     return box->currentText();
 }
 
-void MainWindow::printCommands(QString command, QVector<QVariant> &params){
+void MainWindow::printCommands(QString command, QVector<QVariant> params){
+
+   if (params.isEmpty())
+       return;
 
    runstruct runvars;
 
