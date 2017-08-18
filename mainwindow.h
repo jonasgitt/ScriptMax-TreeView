@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QProgressBar>
 #include <QModelIndex>
+#include "ScriptLines.h"
 
 namespace Ui {
 class MainWindow; //variables included in the namespace
@@ -23,6 +24,7 @@ class MainWindow; //variables included in the namespace
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
 
 enum {OPENGENIE, PYTHON, WithSM, wait, Pressure, Area, runContr};
 
@@ -51,8 +53,8 @@ public:
     void samplestoPlainTextEdit();
 
     QString findSampNum(QString sampName);
-    void printCommands(QString command, QVector<QVariant> params);
-
+    void printCommands(QString command, QVector<QVariant> params, int row);
+    void printContrast(runstruct &runvars, int row, QVector<QVariant> params);
 
 
 public slots:
@@ -126,6 +128,8 @@ private:
     QStringList parameterList(QVariant runOption);
     void parseTree();
     QVector<QVariant> getChildData(int parentRow);
+    void setColor(Qt::GlobalColor color, int rowNumber);
+
      //--------------//treeview//-----------------//
 
     void setSampleComboBox(QModelIndex comboIndex);

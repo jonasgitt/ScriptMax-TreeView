@@ -596,8 +596,9 @@ void MainWindow::initTree(){
 
 void MainWindow::updateComboSlot(QModelIndex topLeft){
 
-    if (topLeft.column() != 0)
+    if (topLeft.column() != 0){
         return;
+}
 
     QVariant newdata = ui->TreeView->model()->data(topLeft);
     if (newdata == "Choose a Command...") return;
@@ -791,7 +792,8 @@ void MainWindow::parseTree(){
     for (int row = 0; row < model->rowCount(QModelIndex()); row++){
         QModelIndex comboIndex = model->index(row,0, QModelIndex());
          QString comboSelected = model->data(comboIndex).toString();
-         printCommands(comboSelected, getChildData(row));
+         printCommands(comboSelected, getChildData(row), row);//make print commands a bool?
+
     }
 
     samplestoPlainTextEdit();
@@ -825,7 +827,7 @@ QString MainWindow::readCombobox(QModelIndex index){
     return box->currentText();
 }
 
-void MainWindow::printCommands(QString command, QVector<QVariant> params){
+void MainWindow::printCommands(QString command, QVector<QVariant> params, int row){
 
    if (params.isEmpty())
        return;
@@ -860,20 +862,11 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params){
        ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
        ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
     }
-   else if (command == "Contrast Change"){
-     runvars = parseContrast(params);
-   }
+   else if (command == "Contrast Change"){ 
+     printContrast(runvars, row, params);
+     }
 
-   //These three had to be split since running runvars.sampNum BEFORE would have been overwritten by parse functions
-   //could solve this by simply passing the runstruct as a parameter rather than returning it
-   if (!params.isEmpty())
-        runvars.sampNum =  findSampNum(params[0].toString());
-   if (command == "Contrast Change"){
-        runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer;
-         ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
-         ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
-   }
-   else if (command == "Run with SM"){
+    if (command == "Run with SM"){
        ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
        ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
    }
@@ -882,6 +875,30 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params){
        ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
      }
 }
+
+void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> params){
+
+    runvars.sampNum =  findSampNum(params[0].toString());
+    runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer; //causes runtime crash if
+
+    if (parseContrast(params, runvars)){
+           ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
+           ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
+           setColor(Qt::green, row); qDebug() << "Crash 1 ";
+       }
+    else{
+        setColor(Qt::red, row); qDebug() << "Crash 0 ";
+    }
+}
+
+void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
+
+    QModelIndex index = ui->TreeView->model()->index(rowNumber, 2, QModelIndex());
+    bool success = ui->TreeView->model()->setData(index, QVariant(QBrush (QColor(color))), Qt::BackgroundRole);
+    if (!success)
+        qDebug() << "Couldn't set Color";
+}
+
 
 QString MainWindow::findSampNum(QString sampName){
     for (int i = 0; i < mySampleTable->sampleList.size(); i++){
@@ -897,7 +914,11 @@ QString MainWindow::findSampNum(QString sampName){
 
 void MainWindow::on_parseCommands_clicked()
 {
-     parseTree();
+    if (mySampleTable->sampleList.isEmpty()){
+         QMessageBox::warning(this, "Error" , "You must define a sample first.");
+        return;
+    }
+    parseTree();
 }
 
 void MainWindow::on_removeCommands_clicked()

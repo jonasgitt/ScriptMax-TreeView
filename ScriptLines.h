@@ -4,7 +4,7 @@
 #include "sampleform.h"
 #include "sampletable.h"
 #include "ui_sampletable.h"
-#include "mainwindow.h"
+//#include "mainwindow.h"
 #include "GCLHighLighter.h"
 #include <QMainWindow>
 #include <QComboBox>

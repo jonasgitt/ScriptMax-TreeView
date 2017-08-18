@@ -197,17 +197,23 @@ runstruct parseRun(QVector<QVariant>variables){
     return runvars; //or call scriptlines directly?
 }
 
-runstruct parseContrast(QVector<QVariant>variables){
+//DO THE ERROR CHECKING
+bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
 
-    runstruct runvars;
-
-    for (int i = 0; i < 3; i++){
-        runvars.concs[i] = variables[i].toDouble();
+    double percentSum = 0;
+    for (int i = 0; i < 4; i++){
+        runvars.concs[i] = variables[i+1].toDouble();
+        percentSum += variables[i+1].toDouble();
     }
-    runvars.flow = variables[3].toDouble();
-    runvars.volume = variables[4].toDouble();
 
-    return runvars;
+    runvars.flow = variables[5].toDouble();
+    runvars.volume = variables[6].toDouble();
+
+    if (fabs(percentSum -100)>= 0.001 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
+        return false;
+       }
+
+    return true;
 }
 
 runstruct parseTransm(QVector<QVariant>variables){

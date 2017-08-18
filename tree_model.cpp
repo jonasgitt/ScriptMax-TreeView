@@ -49,13 +49,18 @@ int TreeModel::columnCount(const QModelIndex & /* parent */) const
 //this gets the data out of the table (e.g. item->data(0) gave me which option was selected in combobox)
 QVariant TreeModel::data(const QModelIndex &index, int role) const
 {
+    TreeItem *item = getItem(index);
+
     if (!index.isValid())
         return QVariant();
+
+    if (role == Qt::BackgroundRole)
+         return item->data(index.column());
+
 
     if (role != Qt::DisplayRole && role != Qt::EditRole)
         return QVariant();
 
-    TreeItem *item = getItem(index);
     return item->data(index.column());
 
 }
@@ -67,7 +72,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
         return 0;
 
     //if we in first col of second child --> not editable
-    if (index.parent() != QModelIndex() && index.column() == 0)
+    if ((index.parent() != QModelIndex() && index.column() == 0) || index.column() == 2)
         return Qt::ItemIsEnabled;
 
     return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | Qt::ItemIsEditable | QAbstractItemModel::flags(index);
@@ -186,9 +191,9 @@ int TreeModel::rowCount(const QModelIndex &parent) const
 //...specified in setData()
 bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (role != Qt::EditRole)
+    /*if (role != Qt::EditRole)
         return false;
-
+*/
     TreeItem *item = getItem(index); //gets item a given index
     bool result = item->setData(index.column(), value);
 
