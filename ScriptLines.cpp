@@ -9,6 +9,7 @@
 #include "mainwindow.h"
 #include "ScriptLines.h"
 #include <QApplication>
+#include <QValidator>
 
 #include <QDebug>
 QString writeSamples(QList<NRSample> samples){
@@ -182,6 +183,8 @@ QString writeTransm(runstruct &runvars, bool Python){
 //a.) there is a uAmp value for every Angle b.) uAmps, angle both greater than 0. c.) no inputs other than numbers or "uAmps"/"Angle"
 bool parseRun(QVector<QVariant>variables, runstruct &runvars){
 
+    //don't use checkifDoubles() here since not all cells must be filled here for input to be valid
+
     runvars.sampName = variables[0].toString();
 
     double ang; double amp; bool ok; bool empty; QString ampStr, angStr;
@@ -190,7 +193,7 @@ bool parseRun(QVector<QVariant>variables, runstruct &runvars){
 
         ampStr = variables[2*i].toString();
         angStr = variables[2*i -1].toString();
-        if (angStr == "" &&  ampStr == "" || angStr.contains("Angle") && ampStr.contains("uAmps") && i!=1){
+        if ((angStr == "" &&  ampStr == "") || (angStr.contains("Angle") && ampStr.contains("uAmps") && i!=1)){
             runvars.angles[i-1] = -1;
             runvars.uAmps[i-1] = -1;
             ok = true;
@@ -218,6 +221,9 @@ bool parseRun(QVector<QVariant>variables, runstruct &runvars){
 //DO THE ERROR CHECKING
 bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
 
+    if(!checkifDoubles(variables, 1, variables.size()))
+        return false;
+
     double percentSum = 0;
     for (int i = 0; i < 4; i++){
         runvars.concs[i] = variables[i+1].toDouble();
@@ -234,18 +240,33 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
     return true;
 }
 
-runstruct parseTransm(QVector<QVariant>variables){
+//DO EEEEEERRROOOOOR
+bool parseTransm(QVector<QVariant>variables, runstruct &runvars){
 
-    runstruct runvars;
+    if(!checkifDoubles(variables, 2, variables.size()))
+        return false;
 
-    runvars.subtitle = variables[0].toString();
-    runvars.heightOffsT = variables[1].toDouble();
+    runvars.subtitle = variables[1].toString();
+    runvars.heightOffsT = variables[2].toDouble();
 
-    for (int i = 2; i < 6; i++){
+    for (int i = 2; i < 7; i++){
         runvars.angles[i-2] = variables[i].toDouble();
     }
-    runvars.uAmpsT = variables[6].toDouble();
-    return runvars;
+    runvars.uAmpsT = variables[7].toDouble();
+    return true;
+}
+
+//checks if input in range is positive doubles
+bool checkifDoubles(QVector<QVariant>&vars, int first, int last){
+
+    QDoubleValidator v(0, 10000, 16);
+    QString input; int pos = 0;
+    for (int i = first; i < last; i++){
+        input = vars[i].toString();
+        if (v.validate(input, pos) != QValidator::Acceptable)
+            return false;
+    }
+    return true;
 }
 
 runstruct parseNIMA_P(QVector<QVariant>variables){
