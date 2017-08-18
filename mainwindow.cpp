@@ -833,11 +833,9 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
        return;
 
    runstruct runvars;
+    runvars.sampNum =  findSampNum(params[0].toString());//needed for trans, run, contrast
 
-   if (command == "Run" || command == "Run with SM"){
-      runvars = parseRun(params);
-    }
-   else if (command == "NIMA Pressure"){
+   if (command == "NIMA Pressure"){
       runvars = parseNIMA_P(params);
        ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
        ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
@@ -866,19 +864,18 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
      printContrast(runvars, row, params);
      }
 
-    if (command == "Run with SM"){
+   else if (command == "Run with SM"){
        ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
        ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
    }
    else if (command == "Run"){
-       ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
-       ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+       printRun(runvars, row, params);
      }
 }
 
 void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> params){
 
-    runvars.sampNum =  findSampNum(params[0].toString());
+
     runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer; //causes runtime crash if
 
     if (parseContrast(params, runvars)){
@@ -889,6 +886,17 @@ void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> pa
     else{
         setColor(Qt::red, row); qDebug() << "Crash 0 ";
     }
+}
+
+void MainWindow::printRun(runstruct &runvars, int row, QVector<QVariant> &params){
+
+    if (parseRun(params, runvars)){
+        ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
+        ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+        setColor(Qt::green, row);
+    }
+    else
+        setColor(Qt::red, row);
 }
 
 void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
@@ -903,7 +911,7 @@ void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
 QString MainWindow::findSampNum(QString sampName){
     for (int i = 0; i < mySampleTable->sampleList.size(); i++){
         if (sampName == mySampleTable->sampleList[i].title){
-            qDebug() << "sampnum: " << QString::number(i+1);
+            //qDebug() << "sampnum: " << QString::number(i+1);
             return QString::number(i+1);
     }
         }
@@ -914,10 +922,10 @@ QString MainWindow::findSampNum(QString sampName){
 
 void MainWindow::on_parseCommands_clicked()
 {
-    if (mySampleTable->sampleList.isEmpty()){
+    /*if (mySampleTable->sampleList.isEmpty()){
          QMessageBox::warning(this, "Error" , "You must define a sample first.");
         return;
-    }
+    }*/
     parseTree();
 }
 

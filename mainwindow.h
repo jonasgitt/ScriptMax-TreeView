@@ -55,7 +55,7 @@ public:
     QString findSampNum(QString sampName);
     void printCommands(QString command, QVector<QVariant> params, int row);
     void printContrast(runstruct &runvars, int row, QVector<QVariant> params);
-
+    void printRun(runstruct &runvars, int row, QVector<QVariant> &params);
 
 public slots:
 

@@ -35,7 +35,7 @@ public:
 };
 
 
-runstruct parseRun(QVector<QVariant>variables);
+bool parseRun(QVector<QVariant>variables, runstruct &runvars);
 bool parseContrast(QVector<QVariant>variables, runstruct &runvars);
 runstruct parseTransm(QVector<QVariant>variables);
 runstruct parseNIMA_A(QVector<QVariant>variables);

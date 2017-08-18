@@ -76,18 +76,20 @@ QString writeRun(runstruct &runvars, int runSM, bool Python){
     }
 
     for (int i = 0; i < 3; i++){
-        if (runSM){
-            if (!Python) scriptLine += "runTime = runAngle_SM(s";
-            else if (Python) scriptLine += "\trunAngle_SM(sample[";
+       if (runvars.angles[i] != -1){
+            if (runSM){
+                if (!Python) scriptLine += "runTime = runAngle_SM(s";
+                else if (Python) scriptLine += "\trunAngle_SM(sample[";
+            }
+            else {
+                if (!Python) scriptLine += "runTime = runAngle(s";
+                else if (Python) scriptLine += "\trunAngle(sample[";
+            }
+            scriptLine += runvars.sampNum;
+            if (Python) scriptLine += "]";
+            scriptLine += "," + QString::number(runvars.angles[i]);
+            scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
         }
-        else {
-            if (!Python) scriptLine += "runTime = runAngle(s";
-            else if (Python) scriptLine += "\trunAngle(sample[";
-        }
-        scriptLine += runvars.sampNum;
-        if (Python) scriptLine += "]";
-        scriptLine += "," + QString::number(runvars.angles[i]);
-        scriptLine += "," + QString::number(runvars.uAmps[i]) + ")" + "\n";
     }
 
     return scriptLine;
@@ -176,25 +178,41 @@ QString writeTransm(runstruct &runvars, bool Python){
 }
 
 
+//Only parses the run into the runstruct if:
+//a.) there is a uAmp value for every Angle b.) uAmps, angle both greater than 0. c.) no inputs other than numbers or "uAmps"/"Angle"
+bool parseRun(QVector<QVariant>variables, runstruct &runvars){
 
-runstruct parseRun(QVector<QVariant>variables){
+    runvars.sampName = variables[0].toString();
 
-    runstruct runvars;
+    double ang; double amp; bool ok; bool empty; QString ampStr, angStr;
 
-    runvars.sampName = variables[0].toString();//0 is now the name - not the number
+    for (int i = 1; i < 4; i++){
 
-    runvars.angles[0] = variables[1].toDouble();
-    runvars.uAmps[0] = variables[2].toDouble();
+        ampStr = variables[2*i].toString();
+        angStr = variables[2*i -1].toString();
+        if (angStr == "" &&  ampStr == "" || angStr.contains("Angle") && ampStr.contains("uAmps") && i!=1){
+            runvars.angles[i-1] = -1;
+            runvars.uAmps[i-1] = -1;
+            ok = true;
+            empty = true;
+        }
+        else if (angStr != "" && ampStr != ""){
+            ang = variables[2*i-1].toDouble();
+            amp = variables[2*i].toDouble();
+            ok = true;
+        }
+        else
+            return false;
+        if (ang <= 0.0 || amp <= 0.0)
+            return false;
+        else if (ok && !empty) {
+            runvars.angles[i-1] = ang;
+            runvars.uAmps[i-1] = amp;
+            ok = true;
+        }
+    }
 
-    runvars.angles[1] = variables[3].toDouble();
-    runvars.uAmps[1] = variables[4].toDouble();
-
-    runvars.angles[2] = variables[5].toDouble();
-    runvars.uAmps[2] = variables[6].toDouble();
-
-    qDebug() << "angle 3: " << variables[5];
-
-    return runvars; //or call scriptlines directly?
+    return ok;
 }
 
 //DO THE ERROR CHECKING
