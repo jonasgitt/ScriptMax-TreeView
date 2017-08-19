@@ -58,6 +58,10 @@ public:
     void printRun(runstruct &runvars, int row, QVector<QVariant> &params);
     void printRunSM(runstruct &runvars, int row, QVector<QVariant> &params);
     void printRunTr(runstruct &runvars, int row, QVector<QVariant> &params);
+    void printJulabo(runstruct &runvars, int row, QVector<QVariant> params);
+    void printEuro(runstruct &runvars, int row, QVector<QVariant> &params);
+    void printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &params);
+    void printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &params);
 
 public slots:
 

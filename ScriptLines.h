@@ -38,10 +38,10 @@ public:
 bool parseRun(QVector<QVariant>variables, runstruct &runvars);
 bool parseContrast(QVector<QVariant>variables, runstruct &runvars);
 bool parseTransm(QVector<QVariant>variables, runstruct &runvars);
-runstruct parseNIMA_A(QVector<QVariant>variables);
-runstruct parseNIMA_P(QVector<QVariant>variables);
-runstruct parseJulabo(QVector<QVariant>variables);
-runstruct parseEurotherm(QVector<QVariant>variables);
+bool parseNIMA_A(QVector<QVariant>variables, runstruct &runvars);
+bool parseNIMA_P(QVector<QVariant>variables, runstruct &runvars);
+bool parseJulabo(QVector<QVariant> &variables, runstruct runvars);
+bool parseEurotherm(QVector<QVariant>variables, runstruct &runvars);
 
 //OpenGenie Strings
 QString writeSamples(QList<NRSample> samples);
@@ -52,7 +52,7 @@ QString writeEuro(runstruct &runvars);
 QString writeNIMA(runstruct &runvars, int mode, bool Python);
 QString writeTransm(runstruct &runvars, bool Python);
 
-bool checkifDoubles(QVector<QVariant>&vars, int first, int last);
+bool checkifDoubles(QVector<QVariant>&vars, int first, int last, int lower = 0, int upper = 1000);
 
 #endif // SCRIPTLINES_H
 

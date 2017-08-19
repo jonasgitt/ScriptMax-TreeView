@@ -836,28 +836,19 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
     runvars.sampNum =  findSampNum(params[0].toString());//needed for trans, run, contrast
 
     if (command == "NIMA Pressure"){
-        runvars = parseNIMA_P(params);
-        ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
-        ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
+        printNIMA_P(runvars, row, params);
     }
     else if (command == "NIMA Area"){
-        runvars = parseNIMA_A(params);
-        ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
-        ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
+        printNIMA_A(runvars, row, params);
     }
     else if (command == "Eurotherm"){
-        runvars = parseEurotherm(params);
-        ui->plainTextEdit->insertPlainText(writeEuro(runvars));
-        ui->PyScriptBox->insertPlainText(writeEuro(runvars));
+        printEuro(runvars, row, params);
     }
     else if (command == "Julabo"){
-        runvars = parseJulabo(params);
-        ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
-        ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0)); //is this python compatible?
+        printJulabo(runvars, row, params);
     }
     else if (command == "Run Transmissions"){
         printRunTr(runvars, row, params);
-
     }
     else if (command == "Contrast Change"){
         printContrast(runvars, row, params);
@@ -868,6 +859,50 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
     }
     else if (command == "Run"){
         printRun(runvars, row, params);
+    }
+}
+
+void MainWindow::printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &params){
+    if (parseNIMA_P(params, runvars)){
+        ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
+        ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
+        setColor(Qt::green, row);
+    }
+    else{
+        setColor(Qt::red, row);
+    }
+}
+void MainWindow::printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &params){
+    if (parseNIMA_A(params, runvars)){
+        ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
+        ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
+        setColor(Qt::green, row);
+    }
+    else{
+        setColor(Qt::red, row);
+    }
+}
+
+void MainWindow::printEuro(runstruct &runvars, int row, QVector<QVariant> &params){
+    if (parseEurotherm(params, runvars)){
+        ui->plainTextEdit->insertPlainText(writeEuro(runvars));
+        ui->PyScriptBox->insertPlainText(writeEuro(runvars));
+        setColor(Qt::green, row);
+    }
+    else{
+        setColor(Qt::red, row);
+    }
+}
+
+void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> params){
+
+    if (parseJulabo(params, runvars)){
+        ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
+        ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0));
+        setColor(Qt::green, row);
+    }
+    else{
+        setColor(Qt::red, row);
     }
 }
 

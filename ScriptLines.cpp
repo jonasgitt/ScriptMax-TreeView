@@ -240,7 +240,7 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
     return true;
 }
 
-//DO EEEEEERRROOOOOR
+
 bool parseTransm(QVector<QVariant>variables, runstruct &runvars){
 
     if(!checkifDoubles(variables, 2, variables.size()))
@@ -256,10 +256,69 @@ bool parseTransm(QVector<QVariant>variables, runstruct &runvars){
     return true;
 }
 
-//checks if input in range is positive doubles
-bool checkifDoubles(QVector<QVariant>&vars, int first, int last){
 
-    QDoubleValidator v(0, 10000, 16);
+
+bool parseNIMA_P(QVector<QVariant>variables, runstruct &runvars){
+
+    if(!checkifDoubles(variables, 0, variables.size()))
+        return false;
+
+    runvars.pressure = variables[0].toDouble();
+    return true;
+}
+
+bool parseNIMA_A(QVector<QVariant>variables, runstruct &runvars){
+
+    if(!checkifDoubles(variables, 0, variables.size()))
+        return false;
+    runvars.area = variables[0].toDouble();
+
+    return true;
+}
+
+//For now, runcontrol(y/n) depends only if the user has used the available field.
+bool parseJulabo(QVector<QVariant>&variables, runstruct runvars){
+
+    int last = 3;
+    bool runcontrol = true;
+    QString max = variables[1].toString();
+    QString min = variables[2].toString();
+
+    if ((max == "Run Control Max" && min == "Run Control Min") || (max == "" && min == "")){
+        last = 1;
+        runcontrol = false;
+    }
+
+    if(!checkifDoubles(variables, 0, last, -5, 95))
+        return false;
+
+    runvars.JTemp = variables[0].toDouble();
+    runvars.JMax = variables[1].toDouble();
+    runvars.JMin = variables[2].toDouble();
+
+    if (runcontrol && (runvars.JMax < runvars.JTemp || runvars.JMin > runvars.JTemp)){
+        return false;
+    }
+
+    return true;
+}
+
+bool parseEurotherm(QVector<QVariant>variables, runstruct &runvars){
+
+    if(!checkifDoubles(variables, 0, variables.size()))
+        return false;
+
+    for (int i = 0; i < 8; i++){
+        runvars.euroTemps[i] = variables[0].toDouble();
+    }
+
+    return true;
+}
+
+//checks if input in range is positive doubles, default lower = 0, upper = 1000
+bool checkifDoubles(QVector<QVariant>&vars, int first, int last, int lower, int upper){
+
+    QDoubleValidator v(lower, upper, 16);
     QString input; int pos = 0;
     for (int i = first; i < last; i++){
         input = vars[i].toString();
@@ -267,45 +326,4 @@ bool checkifDoubles(QVector<QVariant>&vars, int first, int last){
             return false;
     }
     return true;
-}
-
-runstruct parseNIMA_P(QVector<QVariant>variables){
-
-    runstruct runvars;
-
-    runvars.pressure = variables[0].toDouble();
-
-    return runvars;
-}
-
-runstruct parseNIMA_A(QVector<QVariant>variables){
-
-    runstruct runvars;
-
-    runvars.area = variables[0].toDouble();
-
-    return runvars;
-}
-
-
-runstruct parseJulabo(QVector<QVariant>variables){
-
-    runstruct runvars;
-
-    runvars.JTemp = variables[0].toDouble();
-    runvars.JMax = variables[1].toDouble();
-    runvars.JMin = variables[2].toDouble();
-
-    return runvars;
-}
-
-runstruct parseEurotherm(QVector<QVariant>variables){
-
-    runstruct runvars;
-
-    for (int i = 0; i < 8; i++){
-        runvars.euroTemps[i] = variables[0].toDouble();
-    }
-
-    return runvars;
 }
