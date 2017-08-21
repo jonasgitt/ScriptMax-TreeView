@@ -595,7 +595,7 @@ void MainWindow::initTree(){
     ui->TreeView->setEditTriggers(QAbstractItemView::AnyKeyPressed);
     ui->TreeView->setEditTriggers(QAbstractItemView::DoubleClicked);
     ui->TreeView->resizeColumnToContents(0);
-    ui->TreeView->setColumnWidth(1, 150);
+    ui->TreeView->setColumnWidth(1, 170);
     ui->TreeView->setColumnWidth(2, 65);
 }
 
@@ -624,7 +624,7 @@ QStringList MainWindow::parameterList(QVariant runOption){
     QStringList parameters;
 
     if (runOption == "Run" || runOption == "Run with SM") {
-        parameters << "Sample" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1";
+        parameters << "Sample" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1" << "Subtitle";
      }
     else if (runOption == "Run Transmissions"){
         parameters << "Sample" << "uAmps" << "s4vg" << "s3vg" << "s2vg" << "s1vg" << "Height Offset" << "Subtitle";
@@ -885,6 +885,7 @@ void MainWindow::printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &par
     if (parseNIMA_P(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Pressure, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Pressure, PYTHON));
+        setNIMA_PSummary(runvars, row);
         setColor(Qt::green, row);
     }
     else{
@@ -894,7 +895,7 @@ void MainWindow::printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &par
 
 void MainWindow::setNIMA_PSummary(runstruct &runvars, int row){
 
-    QString summary = "P = " + QString::number(runvars.pressure) + "Pa";
+    QString summary = "P = " + QString::number(runvars.pressure) + "mN/m";
     QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
     ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
 }
@@ -903,6 +904,7 @@ void MainWindow::printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &par
     if (parseNIMA_A(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeNIMA(runvars, Area, PYTHON));
+        setNIMA_ASummary(runvars, row);
         setColor(Qt::green, row);
     }
     else{
@@ -912,7 +914,7 @@ void MainWindow::printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &par
 
 void MainWindow::setNIMA_ASummary(runstruct &runvars, int row){
 
-    QString summary = "A = " + QString::number(runvars.area) + "mm^2";
+    QString summary = "A = " + QString::number(runvars.area) + "cm^2";
     QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
     ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
 }
@@ -936,7 +938,7 @@ void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> para
     if (parseJulabo(params, runvars, runcontrol)){
         qDebug()<< "PrinTJulabo: " << runvars.JTemp;
         ui->plainTextEdit->insertPlainText(writeJulabo(runvars, runcontrol)); //implement runcontrol
-        ui->PyScriptBox->insertPlainText(writeJulabo(runvars, runcontrol));
+        ui->PyScriptBox->insertPlainText(pyWriteJulabo(runvars, runcontrol));
         setJulaboSummary(runvars, runcontrol, row);
         setColor(Qt::green, row);
     }
@@ -975,7 +977,8 @@ void MainWindow::setContrastSummary(runstruct &runvars, int row){
     for (int i = 1; i < 4; i++){
         summary += ":" + QString::number(runvars.concs[i]);
     }
-    summary += "   " + QString::number(runvars.flow) + "mL/min";
+    summary += ", " + QString::number(runvars.flow) + "mL/min";
+    summary += ", " + QString::number(runvars.volume) + "mL";
 
     QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
     ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
@@ -1017,7 +1020,8 @@ void MainWindow::printRun(runstruct &runvars, int row, QVector<QVariant> &params
 
 void MainWindow::setRunSummary(runstruct &runvars, int row){
 
-    QString summary = runvars.sampName;
+    QString summary = runvars.sampName + ", " + runvars.subtitle + ", ";
+    summary += QString::number(runvars.uAmps[0] + runvars.uAmps[1] + runvars.uAmps[2]) + " uAmps";
 
     QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
     ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);

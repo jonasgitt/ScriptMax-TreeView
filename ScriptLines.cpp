@@ -85,7 +85,6 @@ QString PyWriteSamples(QList <NRSample> samples){
         scriptLine += tabs + "'trans'             : " + QString::number(samples[i].translation) + ",\n";
         scriptLine += tabs + "'height'            : " + QString::number(samples[i].height) + ",\n";
         scriptLine += tabs + "'phi_offset'        : " + samples[i].phi_offset + ",\n";
-        scriptLine += tabs + "'height'            : " + QString::number(samples[i].height) + ",\n";
         //scriptLine += tabs + "'psi'             : " + QString::number(samples[i]. + ",\n";
         scriptLine += tabs + "'footprint'         : " + QString::number(samples[i].footprint) + ",\n";
         scriptLine += tabs + "'resolution'        : " + QString::number(samples[i].resolution) + ",\n";
@@ -120,7 +119,7 @@ QString writeRun(runstruct &runvars, int runSM, bool Python){
     for (int i = 0; i < 3; i++){
        if (runvars.angles[i] != -1){
             if (runSM){
-                if (!Python) scriptLine += "runTime = runAngle_SM(s";
+                if (!Python) scriptLine += "runTime = runAngle:SM(s";
                 else if (Python) scriptLine += "\trunAngle_SM(sample[";
             }
             else {
@@ -149,7 +148,7 @@ QString writeContrast(runstruct &runvars, int wait, bool Python){
 
     scriptLine += QString::number(runvars.knauer) + ", ";
 
-    for (int i = 0; i < 4; i++){
+    for (int i = 0; i < 5; i++){
         scriptLine += QString::number(runvars.concs[i]);
         scriptLine += ", ";
     }
@@ -174,6 +173,19 @@ QString writeJulabo(runstruct &runvars, int runcont){
      scriptLine += "\n";
      return scriptLine;
 }
+
+QString pyWriteJulabo(runstruct &runvars, bool runcont){
+
+    QString scriptLine = "    cset(Julabo_WB=" + QString::number(runvars.JTemp);
+
+    if (runcont){
+        scriptLine += "runcontrol=1, lowlimit=" + QString::number(runvars.JMin) + ", ";
+        scriptLine += "highlimit=" + QString::number(runvars.JMax);
+    }
+    scriptLine += ")\n";
+    return scriptLine;
+}
+
 
 QString writeEuro(runstruct &runvars){
     QString scriptLine;
@@ -224,16 +236,18 @@ QString writeTransm(runstruct &runvars, bool Python){
 //a.) there is a uAmp value for every Angle b.) uAmps, angle both greater than 0. c.) no inputs other than numbers or "uAmps"/"Angle"
 bool parseRun(QVector<QVariant>variables, runstruct &runvars){
 
-    //don't use checkifDoubles() here since not all cells must be filled here for input to be valid
+    if (!checkifDoubles(variables, 2, variables.size()))
+        return false;
 
     runvars.sampName = variables[0].toString();
+    runvars.subtitle = variables[1].toString();
 
     double ang; double amp; bool ok; bool empty; QString ampStr, angStr;
 
     for (int i = 1; i < 4; i++){
 
-        ampStr = variables[2*i].toString();
-        angStr = variables[2*i -1].toString();
+        ampStr = variables[2*i+1].toString();
+        angStr = variables[2*i].toString();
         if ((angStr == "" &&  ampStr == "") || (angStr.contains("Angle") && ampStr.contains("uAmps") && i!=1)){
             runvars.angles[i-1] = -1;
             runvars.uAmps[i-1] = -1;
@@ -241,13 +255,13 @@ bool parseRun(QVector<QVariant>variables, runstruct &runvars){
             empty = true;
         }
         else if (angStr != "" && ampStr != ""){
-            ang = variables[2*i-1].toDouble();
-            amp = variables[2*i].toDouble();
+            ang = variables[2*i].toDouble();
+            amp = variables[2*i+1].toDouble();
             ok = true;
         }
         else
             return false;
-        if (ang <= 0.0 || amp <= 0.0)
+        if (ang <= 0.0 || amp <= 0.0 || ang >= 5)
             return false;
         else if (ok && !empty) {
             runvars.angles[i-1] = ang;
@@ -259,7 +273,7 @@ bool parseRun(QVector<QVariant>variables, runstruct &runvars){
     return ok;
 }
 
-//DO THE ERROR CHECKING
+
 bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
 
     if(!checkifDoubles(variables, 1, variables.size()))
@@ -274,8 +288,8 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
     runvars.flow = variables[5].toDouble();
     runvars.volume = variables[6].toDouble();
 
-    if (fabs(percentSum -100)>= 0.001 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
-        return false;
+    if (fabs(percentSum -100)>= 0.1 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
+        qDebug() << percentSum;return false;
        }
 
     return true;
@@ -283,6 +297,8 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
 
 
 bool parseTransm(QVector<QVariant>variables, runstruct &runvars){
+
+    runvars.sampName = variables[0].toString();
 
     if(!checkifDoubles(variables, 2, variables.size()))
         return false;
@@ -333,7 +349,7 @@ bool parseJulabo(QVector<QVariant>&variables, runstruct &runvars, bool &runcontr
     if(!checkifDoubles(variables, 0, last, -5, 95))
         return false;
 
-    runvars.JTemp = variables[0].toDouble(); qDebug() << "JULABO: " << runvars.JTemp;
+    runvars.JTemp = variables[0].toDouble();
     runvars.JMax = variables[1].toDouble();
     runvars.JMin = variables[2].toDouble();
 

@@ -1,6 +1,6 @@
 def runscript():
     change(nperiods=1)
-    cset("monitor", 1)
+    cset(monitor = 1)
     experimentsettings
 
     #====================================

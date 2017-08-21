@@ -20,7 +20,7 @@ public:
     QString sampNum;
     QString sampName;
 
-    double concs[3];
+    double concs[4];
     double flow, volume;
     int knauer;
 
@@ -49,6 +49,7 @@ QString PyWriteSamples(QList <NRSample> samples);
 QString writeRun(runstruct &variables,  int runSM, bool Python);
 QString writeContrast(runstruct &runvars, int wait, bool Python);
 QString writeJulabo(runstruct &runvars, int runCont);
+QString pyWriteJulabo(runstruct &runvars, bool runcont);
 QString writeEuro(runstruct &runvars);
 QString writeNIMA(runstruct &runvars, int mode, bool Python);
 QString writeTransm(runstruct &runvars, bool Python);
