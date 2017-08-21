@@ -40,11 +40,12 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars);
 bool parseTransm(QVector<QVariant>variables, runstruct &runvars);
 bool parseNIMA_A(QVector<QVariant>variables, runstruct &runvars);
 bool parseNIMA_P(QVector<QVariant>variables, runstruct &runvars);
-bool parseJulabo(QVector<QVariant> &variables, runstruct runvars);
+bool parseJulabo(QVector<QVariant> &variables, runstruct &runvars, bool &runcontrol);
 bool parseEurotherm(QVector<QVariant>variables, runstruct &runvars);
 
 //OpenGenie Strings
 QString writeSamples(QList<NRSample> samples);
+QString PyWriteSamples(QList <NRSample> samples);
 QString writeRun(runstruct &variables,  int runSM, bool Python);
 QString writeContrast(runstruct &runvars, int wait, bool Python);
 QString writeJulabo(runstruct &runvars, int runCont);

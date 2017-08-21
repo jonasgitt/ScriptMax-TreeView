@@ -66,6 +66,47 @@ QString writeSamples(QList<NRSample> samples){
 
 }
 
+QString PyWriteSamples(QList <NRSample> samples){
+
+    QString scriptLine = "def experimentsettings():\n";
+
+    if (samples.isEmpty())
+        return scriptLine;
+
+    QString tab = "    ";
+    QString tabs = tab + tab + tab;
+
+    for (int i = 0; i < samples.length(); i++){
+
+        scriptLine += tab + "S" + QString::number(i+1) + " = {\n";
+
+        scriptLine += tabs + "'title'             : '" + samples[i].title + "',\n";
+        scriptLine += tabs + "'subtitle'          : \"" + samples[i].subtitle + "\",\n";
+        scriptLine += tabs + "'trans'             : " + QString::number(samples[i].translation) + ",\n";
+        scriptLine += tabs + "'height'            : " + QString::number(samples[i].height) + ",\n";
+        scriptLine += tabs + "'phi_offset'        : " + samples[i].phi_offset + ",\n";
+        scriptLine += tabs + "'height'            : " + QString::number(samples[i].height) + ",\n";
+        //scriptLine += tabs + "'psi'             : " + QString::number(samples[i]. + ",\n";
+        scriptLine += tabs + "'footprint'         : " + QString::number(samples[i].footprint) + ",\n";
+        scriptLine += tabs + "'resolution'        : " + QString::number(samples[i].resolution) + ",\n";
+        //scriptLine += tabs + "'coarse_nomirror'   : " + QString::number(samples[i]. + ",\n";
+        scriptLine += tabs + "'knauer'            : " + QString::number(samples[i].knauer) + ",\n";
+
+        scriptLine += tab + tab + "}\n";
+        scriptLine += tab + "###########################################\n";
+    }
+
+    scriptLine += tab + "sample = [";
+    for (int i=0; i < samples.length(); i++){
+       scriptLine += "S" + QString::number(i+1);
+
+       if (i != samples.length() -1)
+           scriptLine + ", ";
+    }
+    scriptLine += "]";
+
+    return scriptLine;
+}
 
 QString writeRun(runstruct &runvars, int runSM, bool Python){
 
@@ -277,10 +318,10 @@ bool parseNIMA_A(QVector<QVariant>variables, runstruct &runvars){
 }
 
 //For now, runcontrol(y/n) depends only if the user has used the available field.
-bool parseJulabo(QVector<QVariant>&variables, runstruct runvars){
+bool parseJulabo(QVector<QVariant>&variables, runstruct &runvars, bool &runcontrol){
 
     int last = 3;
-    bool runcontrol = true;
+    runcontrol = true;
     QString max = variables[1].toString();
     QString min = variables[2].toString();
 
@@ -292,7 +333,7 @@ bool parseJulabo(QVector<QVariant>&variables, runstruct runvars){
     if(!checkifDoubles(variables, 0, last, -5, 95))
         return false;
 
-    runvars.JTemp = variables[0].toDouble();
+    runvars.JTemp = variables[0].toDouble(); qDebug() << "JULABO: " << runvars.JTemp;
     runvars.JMax = variables[1].toDouble();
     runvars.JMin = variables[2].toDouble();
 

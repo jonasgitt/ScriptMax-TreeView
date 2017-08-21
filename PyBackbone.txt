@@ -1,5 +1,23 @@
-#Python Backbone
-#comment
+def runscript():
+    change(nperiods=1)
+    cset("monitor", 1)
+    experimentsettings
 
-def runscript()
+    #====================================
+    #These should be changed with each sample change:
+    #====================================
 
+    #====================================
+    #====================================
+
+    #====================================
+     #Script body begins here:
+    #====================================
+
+
+    #====================================
+    #Script body ends here:
+    #====================================
+
+
+def experimentsettings():

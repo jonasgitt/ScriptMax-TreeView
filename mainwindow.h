@@ -51,17 +51,31 @@ public:
     void updateRunTime(double angle);
 
     void samplestoPlainTextEdit();
+    void samplestoPyTextEdit();
 
     QString findSampNum(QString sampName);
     void printCommands(QString command, QVector<QVariant> params, int row);
+
     void printContrast(runstruct &runvars, int row, QVector<QVariant> params);
+    void setContrastSummary(runstruct &runvars, int row);
+
     void printRun(runstruct &runvars, int row, QVector<QVariant> &params);
     void printRunSM(runstruct &runvars, int row, QVector<QVariant> &params);
+    void setRunSummary(runstruct &runvars, int row);
+
     void printRunTr(runstruct &runvars, int row, QVector<QVariant> &params);
+    void setTransmSummary(runstruct &runvars, int row);
+
     void printJulabo(runstruct &runvars, int row, QVector<QVariant> params);
+    void setJulaboSummary(runstruct &runvars, bool runcontrol, int row);
+
     void printEuro(runstruct &runvars, int row, QVector<QVariant> &params);
+
     void printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &params);
+    void setNIMA_PSummary(runstruct &runvars, int row);
+
     void printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &params);
+    void setNIMA_ASummary(runstruct &runvars, int row);
 
 public slots:
 

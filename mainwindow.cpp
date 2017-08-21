@@ -101,16 +101,21 @@ void MainWindow::pyWriteBackbone(){
     ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 }
 
-//------------------------------------------------------------------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
-//---------------------------------RUNOPTIONS-----------------------------------------------------------------------//
-//------------------------------------------------------------------------------------------------------------------//
+
 void MainWindow::samplestoPlainTextEdit(){
     ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
     QList<NRSample> samples = mySampleTable->sampleList;
     ui->plainTextEdit->insertPlainText(writeSamples(samples));
+}
+
+void MainWindow::samplestoPyTextEdit(){
+
+    bool found = ui->PyScriptBox->find("def experimentsettings():");   qDebug() << "found it? " << found;
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+    QList<NRSample> samples = mySampleTable->sampleList;
+    ui->PyScriptBox->insertPlainText(PyWriteSamples(samples));
 }
 
 
@@ -566,7 +571,7 @@ void MainWindow::updateProgBar(int row){
 void MainWindow::initTree(){
 
     QStringList headers;
-    headers << tr("Action") << tr("Summary of Command") << tr("Further Information");
+    headers << tr("Action") << tr("Summary of Command") << tr("Input Valid") << tr("Further Information");
     TreeModel *model = new TreeModel(headers);
     ui->TreeView->setModel(model);
     ui->TreeView->setAnimated(true);
@@ -590,7 +595,8 @@ void MainWindow::initTree(){
     ui->TreeView->setEditTriggers(QAbstractItemView::AnyKeyPressed);
     ui->TreeView->setEditTriggers(QAbstractItemView::DoubleClicked);
     ui->TreeView->resizeColumnToContents(0);
-      ui->TreeView->setColumnWidth(1, 150);//dont work
+    ui->TreeView->setColumnWidth(1, 150);
+    ui->TreeView->setColumnWidth(2, 65);
 }
 
 
@@ -780,12 +786,24 @@ void MainWindow::removeRow()
 //need to update runtime for run and runtrans
 void MainWindow::parseTree(){
 
+    ui->plainTextEdit->moveCursor(QTextCursor::Start);
+    ui->PyScriptBox->moveCursor(QTextCursor::Start);
+
     runTime = runTime.fromString("00:00", "hh:mm");
 
     writeBackbone();
 
-    ui->plainTextEdit->find("runTime=0"); //positions the cursor to insert instructions
+    samplestoPlainTextEdit();
+    samplestoPyTextEdit();
+
+    ui->plainTextEdit->moveCursor(QTextCursor::Start);
+    bool foundr = ui->plainTextEdit->find("runTime=0"); qDebug() << "found runtime " << foundr;
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+
+    ui->PyScriptBox->moveCursor(QTextCursor::Start);
+    bool found = ui->PyScriptBox->find("#Script body begins here:"); qDebug() << "found py " << found;
+    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
     QAbstractItemModel *model = ui->TreeView->model();
 
@@ -796,7 +814,8 @@ void MainWindow::parseTree(){
 
     }
 
-    samplestoPlainTextEdit();
+
+
     if(ui->checkBox->isChecked()){
         save(OPENGENIE);
     }
@@ -872,6 +891,14 @@ void MainWindow::printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &par
         setColor(Qt::red, row);
     }
 }
+
+void MainWindow::setNIMA_PSummary(runstruct &runvars, int row){
+
+    QString summary = "P = " + QString::number(runvars.pressure) + "Pa";
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
+}
+
 void MainWindow::printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &params){
     if (parseNIMA_A(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeNIMA(runvars, Area, OPENGENIE));
@@ -882,6 +909,14 @@ void MainWindow::printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &par
         setColor(Qt::red, row);
     }
 }
+
+void MainWindow::setNIMA_ASummary(runstruct &runvars, int row){
+
+    QString summary = "A = " + QString::number(runvars.area) + "mm^2";
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
+}
+
 
 void MainWindow::printEuro(runstruct &runvars, int row, QVector<QVariant> &params){
     if (parseEurotherm(params, runvars)){
@@ -896,9 +931,13 @@ void MainWindow::printEuro(runstruct &runvars, int row, QVector<QVariant> &param
 
 void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> params){
 
-    if (parseJulabo(params, runvars)){
-        ui->plainTextEdit->insertPlainText(writeJulabo(runvars, 0)); //implement runcontrol
-        ui->PyScriptBox->insertPlainText(writeJulabo(runvars, 0));
+    bool runcontrol;
+
+    if (parseJulabo(params, runvars, runcontrol)){
+        qDebug()<< "PrinTJulabo: " << runvars.JTemp;
+        ui->plainTextEdit->insertPlainText(writeJulabo(runvars, runcontrol)); //implement runcontrol
+        ui->PyScriptBox->insertPlainText(writeJulabo(runvars, runcontrol));
+        setJulaboSummary(runvars, runcontrol, row);
         setColor(Qt::green, row);
     }
     else{
@@ -906,19 +945,40 @@ void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> para
     }
 }
 
-void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> params){
+void MainWindow::setJulaboSummary(runstruct &runvars, bool runcontrol, int row){
 
+    QString summary = "T = " + QString::number(runvars.JTemp) + "°C ";
+    if (runcontrol)
+        summary += "with Run Control";
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
+}
+
+void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> params){
 
     runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer; //causes runtime crash if
 
     if (parseContrast(params, runvars)){
            ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
            ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
+           setContrastSummary(runvars, row);
            setColor(Qt::green, row);
        }
     else{
         setColor(Qt::red, row);
     }
+}
+
+void MainWindow::setContrastSummary(runstruct &runvars, int row){
+
+    QString summary = QString::number(runvars.concs[0]);
+    for (int i = 1; i < 4; i++){
+        summary += ":" + QString::number(runvars.concs[i]);
+    }
+    summary += "   " + QString::number(runvars.flow) + "mL/min";
+
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
 }
 
 void MainWindow::printRunTr(runstruct &runvars, int row, QVector<QVariant> &params){
@@ -926,11 +986,21 @@ void MainWindow::printRunTr(runstruct &runvars, int row, QVector<QVariant> &para
     if (parseTransm(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
-           setColor(Qt::green, row);
-       }
+        setTransmSummary(runvars, row);
+        setColor(Qt::green, row);
+    }
     else{
         setColor(Qt::red, row);
     }
+}
+
+void MainWindow::setTransmSummary(runstruct &runvars, int row){
+
+    QString summary = runvars.sampName + "  " + runvars.subtitle;
+
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
+
 }
 
 void MainWindow::printRun(runstruct &runvars, int row, QVector<QVariant> &params){
@@ -938,10 +1008,19 @@ void MainWindow::printRun(runstruct &runvars, int row, QVector<QVariant> &params
     if (parseRun(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
+        setRunSummary(runvars, row);
         setColor(Qt::green, row);
     }
     else
         setColor(Qt::red, row);
+}
+
+void MainWindow::setRunSummary(runstruct &runvars, int row){
+
+    QString summary = runvars.sampName;
+
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
 }
 
 void MainWindow::printRunSM(runstruct &runvars, int row, QVector<QVariant> &params){
@@ -949,6 +1028,7 @@ void MainWindow::printRunSM(runstruct &runvars, int row, QVector<QVariant> &para
     if (parseRun(params, runvars)){
         ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
+        setRunSummary(runvars, row);
         setColor(Qt::green, row);
     }
     else
