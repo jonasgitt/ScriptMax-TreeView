@@ -85,7 +85,7 @@ void SampleTable::displaySamples(){
         s4->setText(QString::number(sampleList[i].s4));
         ui->tableWidget->setItem(i,8,s4);
 
-        QTableWidgetItem *knauer = new QTableWidgetItem; qDebug() << "prin" << sampleList[i].knauer;
+        QTableWidgetItem *knauer = new QTableWidgetItem;
         if (sampleList[i].knauer == -100)
             knauer->setText("");
         else
@@ -121,8 +121,8 @@ void SampleTable::updateSamplesSlot(){
         //if a new sample is being created
         else if (validateSample(row)){
                 NRSample newSample;
-                parseRow(newSample, row); qDebug() << "straight after parsing: " << newSample.knauer;
-                sampleList.append(newSample);if (sampleList.length()) qDebug() << "after" << sampleList[0].knauer;
+                parseRow(newSample, row);
+                sampleList.append(newSample);
         }
 
     }

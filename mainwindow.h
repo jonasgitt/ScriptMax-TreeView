@@ -77,6 +77,9 @@ public:
     void printNIMA_A(runstruct &runvars, int row, QVector<QVariant> &params);
     void setNIMA_ASummary(runstruct &runvars, int row);
 
+    void printFreeCommand(int row, QVector<QVariant> &params);
+    void freeCommandSummary(int row, QVector<QVariant>&params);
+
 public slots:
 
        //--------------//treeview//-----------------//

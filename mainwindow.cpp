@@ -655,6 +655,9 @@ QStringList MainWindow::parameterList(QVariant runOption){
     else if (runOption == "Eurotherm"){
         parameters << "T1" << "T8" << "T7" << "T6" << "T5" << "T4" << "T3" << "T2";
     }
+    else if (runOption == "Free Command")
+        parameters << "Python" << "OpenGenie";
+
     return parameters;
 }
 
@@ -892,6 +895,27 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
     else if (command == "Run"){
         printRun(runvars, row, params);
     }
+    else if (command == "Free Command"){
+       printFreeCommand(row, params);
+    }
+}
+
+void MainWindow::printFreeCommand(int row, QVector<QVariant> &params){
+    ui->PyScriptBox->insertPlainText(params[0].toString());
+    ui->plainTextEdit->insertPlainText(params[1].toString());
+    freeCommandSummary(row, params);
+    setColor(Qt::green, row);
+}
+
+void MainWindow::freeCommandSummary(int row, QVector<QVariant> &params)
+{
+    QString summary;
+    if (params[0].toString() != "")
+        summary = params[0].toString();
+    else
+        summary = params[1].toString();
+    QModelIndex colTwo = ui->TreeView->model()->index(row, 1, QModelIndex());
+    ui->TreeView->model()->setData(colTwo, summary , Qt::DisplayRole);
 }
 
 void MainWindow::printNIMA_P(runstruct &runvars, int row, QVector<QVariant> &params){
