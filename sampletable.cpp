@@ -138,9 +138,11 @@ void SampleTable::parseRow(NRSample &sample, int row){
     sample.psi = ui->tableWidget->item(row, 4)->text().toDouble();
     sample.footprint =  ui->tableWidget->item(row,5)->text().toDouble();
     sample.resolution =  ui->tableWidget->item(row,6)->text().toDouble();
-    sample.s3 =  ui->tableWidget->item(row,7)->text().toDouble();
-    sample.s4 =  ui->tableWidget->item(row,8)->text().toDouble();
+    sample.s3 = ui->tableWidget->item(row,7)->text().toDouble();
+    sample.s4 = ui->tableWidget->item(row,8)->text().toDouble();
 
+    //Referring to sampleList directly because by this point the new sample has already been appended, since parseRow...
+    //...is called every time a cell changes. And appending will, by design, happen before row is filled completely.
     if (sampleList.length()){
         if (ui->tableWidget->item(row,9)->text() == "")
            sampleList[row].knauer = -100; //needed so that sample can be created without these values
