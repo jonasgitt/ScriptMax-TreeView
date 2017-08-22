@@ -155,6 +155,8 @@ private:
     void setSampleComboBox(QModelIndex comboIndex);
     QString readCombobox(QModelIndex index);
 
+    bool WarningMessage(QString message);
+
 };
 
 void saveSettings (const QString &key, const QVariant &value, const QString &group);

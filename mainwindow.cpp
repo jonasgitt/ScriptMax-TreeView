@@ -618,12 +618,23 @@ void MainWindow::updateComboSlot(QModelIndex topLeft){
    }
 
 }
+bool MainWindow::WarningMessage(QString message){
+    QMessageBox::warning(this, tr("Max Script Maker"),
+                                   message,
+                                   QMessageBox::Ok);
+    return true;
+}
 
 QStringList MainWindow::parameterList(QVariant runOption){
 
     QStringList parameters;
 
     if (runOption == "Run" || runOption == "Run with SM") {
+
+        if (mySampleTable->sampleList.isEmpty()){
+            WarningMessage("You must define a sample first.");
+            return parameters;
+        }
         parameters << "Sample" << "uAmps 3" << "Angle 3" << "uAmps 2" << "Angle 2" << "uAmps 1" << "Angle 1" << "Subtitle";
      }
     else if (runOption == "Run Transmissions"){
@@ -809,12 +820,9 @@ void MainWindow::parseTree(){
 
     for (int row = 0; row < model->rowCount(QModelIndex()); row++){
         QModelIndex comboIndex = model->index(row,0, QModelIndex());
-         QString comboSelected = model->data(comboIndex).toString();
-         printCommands(comboSelected, getChildData(row), row);//make print commands a bool?
-
+        QString comboSelected = model->data(comboIndex).toString();
+        printCommands(comboSelected, getChildData(row), row);//make print commands a bool?
     }
-
-
 
     if(ui->checkBox->isChecked()){
         save(OPENGENIE);
@@ -874,6 +882,11 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
     }
 
     else if (command == "Run with SM"){
+
+        if (mySampleTable->sampleList[runvars.sampNum.toInt() -1].coarse_noMirror == -100){
+            WarningMessage("You must define coarse_noMirror for the sample in order to run with SuperMirror");
+            return;
+        }
         printRunSM(runvars, row, params);
     }
     else if (command == "Run"){

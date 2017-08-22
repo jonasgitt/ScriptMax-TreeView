@@ -38,7 +38,7 @@ SampleTable::SampleTable(QMainWindow *parent) :
 void SampleTable::displaySamples(){
 
     for (int row = sampleList.length(); row<   ui->tableWidget->rowCount(); row++){
-        for (int col = 0; col<   ui->tableWidget->columnCount(); col++){
+        for (int col = 0; col <   ui->tableWidget->columnCount(); col++){
             QTableWidgetItem *newItem = new QTableWidgetItem;
             newItem->setText("");
             ui->tableWidget->setItem(row,col,newItem);
@@ -85,7 +85,7 @@ void SampleTable::displaySamples(){
         s4->setText(QString::number(sampleList[i].s4));
         ui->tableWidget->setItem(i,8,s4);
 
-        QTableWidgetItem *knauer = new QTableWidgetItem;
+        QTableWidgetItem *knauer = new QTableWidgetItem; qDebug() << "prin" << sampleList[i].knauer;
         if (sampleList[i].knauer == -100)
             knauer->setText("");
         else
@@ -114,7 +114,6 @@ void SampleTable::updateSamplesSlot(){
         if(row < sampleList.length()){
 
             if (validateSample(row)){
-                qDebug() << "Updating an existing sample";
                 NRSample sample = sampleList[row];
                 parseRow(sample, row);
             }
@@ -122,9 +121,8 @@ void SampleTable::updateSamplesSlot(){
         //if a new sample is being created
         else if (validateSample(row)){
                 NRSample newSample;
-                qDebug() << "appending a new sample";
-                parseRow(newSample, row);
-                sampleList.append(newSample);
+                parseRow(newSample, row); qDebug() << "straight after parsing: " << newSample.knauer;
+                sampleList.append(newSample);if (sampleList.length()) qDebug() << "after" << sampleList[0].knauer;
         }
 
     }
@@ -143,15 +141,17 @@ void SampleTable::parseRow(NRSample &sample, int row){
     sample.s3 =  ui->tableWidget->item(row,7)->text().toDouble();
     sample.s4 =  ui->tableWidget->item(row,8)->text().toDouble();
 
-    if (ui->tableWidget->item(row,9)->text() == "")
-        sample.knauer = -100; //needed so that sample can be created without these values
-    else
-        sample.knauer =  ui->tableWidget->item(row,9)->text().toDouble();
+    if (sampleList.length()){
+        if (ui->tableWidget->item(row,9)->text() == "")
+           sampleList[row].knauer = -100; //needed so that sample can be created without these values
+        else
+           sampleList[row].knauer =  ui->tableWidget->item(row,9)->text().toDouble();
 
-    if (ui->tableWidget->item(row,10)->text() == "")
-        sample.coarse_noMirror = -100;
-    else
-        sample.coarse_noMirror = ui->tableWidget->item(row,10)->text().toDouble();
+        if (ui->tableWidget->item(row,10)->text() == "")
+           sampleList[row].coarse_noMirror = -100; //needed so that sample can be created without these values
+        else
+           sampleList[row].coarse_noMirror =  ui->tableWidget->item(row,10)->text().toDouble();
+    }
 
     ui->tableWidget->item(row,0)->setBackground(Qt::green);
 }
@@ -175,6 +175,7 @@ bool SampleTable::validateSample(int row){
         if (t->item(row,10)->text() != "" && !validateDoubles(t->item(row,10)->text()))
             return false;
     }
+
     return true;
 
 }
@@ -289,21 +290,19 @@ void SampleTable::closeEvent(QCloseEvent *event)
     updateSamplesSlot();
 
     if (areyousure()) {
-            event->accept();
             emit closedSampWindow();
+            event->accept();
+
         } else {
             event->ignore();
         }
 }
-//NEEDS FIXING!
+
 bool SampleTable::areyousure()
 {
 
     bool missing = false;
-    /*for (int row = 0; row < sampleList.length(); row++){
-        if (ui->tableWidget->item(row, 0)->background() == Qt::red)
-            missing = true;
-    }*/
+
     int row = 0;
     while (ui->tableWidget->item(row, 0)->text() != ""){
         if (ui->tableWidget->item(row, 0)->background() == Qt::red)
