@@ -25,23 +25,29 @@ SampleTable::SampleTable(QMainWindow *parent) :
 
         }
     }
+
+    QStringList headers;
+    headers << "Title" << "Translation" << "Height" << "Phi-Offset" << "Psi" << "Footprint" << "Resolution" << "Slit 3" << "Slit 4 (detector)" << "Switch Position" << "Coarse_NoMirror";
+
+    for (int i = 0; i < headers.size(); i++){
+        ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(headers[i]));
+    }
 }
 
 
-
 void SampleTable::displaySamples(){
-    // initialize table
+
     for (int row = sampleList.length(); row<   ui->tableWidget->rowCount(); row++){
         for (int col = 0; col<   ui->tableWidget->columnCount(); col++){
             QTableWidgetItem *newItem = new QTableWidgetItem;
             newItem->setText("");
-              ui->tableWidget->setItem(row,col,newItem);
+            ui->tableWidget->setItem(row,col,newItem);
 
         }
     }
 
     for (int i=0; i <  sampleList.length(); i++){
-          ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem("S"+QString::number(i+1)));
+        ui->tableWidget->setVerticalHeaderItem(i,new QTableWidgetItem("S"+QString::number(i+1)));
 
         QTableWidgetItem *title = new QTableWidgetItem;
         title->setText( sampleList[i].title);
@@ -49,132 +55,141 @@ void SampleTable::displaySamples(){
 
         QTableWidgetItem *trans = new QTableWidgetItem;
         trans->setText(QString::number( sampleList[i].translation));
-         ui->tableWidget->setItem(i,1,trans);
+        ui->tableWidget->setItem(i,1,trans);
 
         QTableWidgetItem *height = new QTableWidgetItem;
         height->setText(QString::number(sampleList[i].height));
-         ui->tableWidget->setItem(i,2,height);
+        ui->tableWidget->setItem(i,2,height);
 
         QTableWidgetItem *phioff = new QTableWidgetItem;
         phioff->setText(sampleList[i].phi_offset);
         ui->tableWidget->setItem(i,3,phioff);
 
+        QTableWidgetItem *psi = new QTableWidgetItem;
+        psi->setText(QString::number(sampleList[i].psi));
+        ui->tableWidget->setItem(i,4,psi);
+
         QTableWidgetItem *footprint = new QTableWidgetItem;
         footprint->setText(QString::number(sampleList[i].footprint));
-        ui->tableWidget->setItem(i,4,footprint);
+        ui->tableWidget->setItem(i,5,footprint);
 
         QTableWidgetItem *res = new QTableWidgetItem;
         res->setText(QString::number(sampleList[i].resolution));
-          ui->tableWidget->setItem(i,5,res);
+        ui->tableWidget->setItem(i,6,res);
 
         QTableWidgetItem *s3 = new QTableWidgetItem;
         s3->setText(QString::number(sampleList[i].s3));
-          ui->tableWidget->setItem(i,6,s3);
+        ui->tableWidget->setItem(i,7,s3);
 
         QTableWidgetItem *s4 = new QTableWidgetItem;
         s4->setText(QString::number(sampleList[i].s4));
-          ui->tableWidget->setItem(i,7,s4);
+        ui->tableWidget->setItem(i,8,s4);
 
         QTableWidgetItem *knauer = new QTableWidgetItem;
-        knauer->setText(QString::number(sampleList[i].knauer));
-          ui->tableWidget->setItem(i,8,knauer);
+        if (sampleList[i].knauer == -100)
+            knauer->setText("");
+        else
+            knauer->setText(QString::number(sampleList[i].knauer));
+        ui->tableWidget->setItem(i,9,knauer);
+
+        QTableWidgetItem *noMirror = new QTableWidgetItem;
+        if (sampleList[i].coarse_noMirror == -100)
+            noMirror->setText("");
+        else
+            noMirror->setText(QString::number(sampleList[i].coarse_noMirror));
+        ui->tableWidget->setItem(i,10,noMirror);
     }
     connect(ui->tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(updateSamplesSlot()));
 }
 
 void SampleTable::updateSamplesSlot(){
-    bool ok;
-
-
-    QRegExp isSum("^[+-]?\\d*\\.?\\d*([+-]\\d*\\.?\\d*)?$");
-    QRegExp isDouble("^[+-]?[0-9]+([\\,\\.][0-9]+)?$");
 
 
     for(int row=0; row< ui->tableWidget->rowCount(); row++){
-        ok = true;
 
+        if(ui->tableWidget->item(row,0)->text() != "")
+            ui->tableWidget->item(row,0)->setBackground(Qt::red);
 
         //if there is already an entry in the list
         if(row < sampleList.length()){
-                //if first column is empty
-                if( ui->tableWidget->item(row,0)->text()=="")
-                    ok = false;
 
-                if(!isSum.exactMatch( ui->tableWidget->item(row,3)->text())){
-                    ok = false;
-                     ui->tableWidget->item(row,3)->setText("");
-                }
-
-                for(int col=1; col <  ui->tableWidget->columnCount()-1; col++){
-                    //what is special about the third column?
-                    if(col!=3)
-                        if (!isDouble.exactMatch( ui->tableWidget->item(row,col)->text())){
-                            ok = false;
-                             ui->tableWidget->item(row,col)->setText("");
-                             ui->tableWidget->setCurrentCell(row,col);
-                        }
-                }
-
-
-                //the above checked if a cell was empty or of the wrong type
-                //if input was ok save the inputted data in the samplelist
-                if (ok){
-                    sampleList[row].title =  ui->tableWidget->item(row,0)->text();
-                    sampleList[row].translation =  ui->tableWidget->item(row,1)->text().toDouble();
-                    sampleList[row].height =  ui->tableWidget->item(row,2)->text().toDouble();
-                    sampleList[row].phi_offset =  ui->tableWidget->item(row,3)->text();
-                    sampleList[row].footprint =  ui->tableWidget->item(row,4)->text().toDouble();
-                    sampleList[row].resolution =  ui->tableWidget->item(row,5)->text().toDouble();
-                    sampleList[row].s3 =  ui->tableWidget->item(row,6)->text().toDouble();
-                    sampleList[row].s4 =  ui->tableWidget->item(row,7)->text().toDouble();
-                    sampleList[row].knauer =  ui->tableWidget->item(row,8)->text().toDouble();
-                }else {
-                    QMessageBox msgBox;
-                    msgBox.setIcon(QMessageBox::Warning);
-                    msgBox.setText("One or more values are missing, of the wrong type or duplicates (e.g. translation or switch!");
-                    msgBox.exec();
-                }
-        }
-         //if a new sample is being created
-         else {
-                if( ui->tableWidget->item(row,0)->text()==""){//only create sample if it has name
-                    ok = false;}
-                if(!isSum.exactMatch( ui->tableWidget->item(row,3)->text())){
-                    ok = false;qDebug() << "not exact match";
-                     ui->tableWidget->item(row,3)->setText("");
-                }
-                for(int col=1; col <  ui->tableWidget->columnCount(); col++){
-                    if(col!=3)
-                        if (!isDouble.exactMatch( ui->tableWidget->item(row,col)->text())){
-                            ok = false;
-                             ui->tableWidget->item(row,col)->setText("");
-                            // ui->tableWidget->setCurrentCell(row,col);
-                        }
-                }
-                if (ok){ // create new smaple in sampleList
-                    NRSample newSample;
-
-                    newSample.title =  ui->tableWidget->item(row,0)->text();
-                    newSample.translation =  ui->tableWidget->item(row,1)->text().toDouble();
-                    newSample.height =  ui->tableWidget->item(row,2)->text().toDouble();
-                    newSample.phi_offset =  ui->tableWidget->item(row,3)->text();
-                    newSample.footprint =  ui->tableWidget->item(row,4)->text().toDouble();
-                    newSample.resolution =  ui->tableWidget->item(row,5)->text().toDouble();
-                    newSample.s3 =  ui->tableWidget->item(row,6)->text().toDouble();
-                    newSample.s4 =  ui->tableWidget->item(row,7)->text().toDouble();
-                    newSample.knauer =  ui->tableWidget->item(row,8)->text().toDouble();
-                    sampleList.append(newSample);
-                    if(sampleList.length() == 1){
-                        //displaySample(0);
-                        currentSample = 0;
-                    }
-
+            if (validateSample(row)){
+                qDebug() << "Updating an existing sample";
+                NRSample sample = sampleList[row];
+                parseRow(sample, row);
             }
         }
+        //if a new sample is being created
+        else if (validateSample(row)){
+                NRSample newSample;
+                qDebug() << "appending a new sample";
+                parseRow(newSample, row);
+                sampleList.append(newSample);
+        }
+
     }
 
 }
 
+void SampleTable::parseRow(NRSample &sample, int row){
+
+    sample.title =  ui->tableWidget->item(row,0)->text();
+    sample.translation =  ui->tableWidget->item(row,1)->text().toDouble();
+    sample.height =  ui->tableWidget->item(row,2)->text().toDouble();
+    sample.phi_offset =  ui->tableWidget->item(row,3)->text();
+    sample.psi = ui->tableWidget->item(row, 4)->text().toDouble();
+    sample.footprint =  ui->tableWidget->item(row,5)->text().toDouble();
+    sample.resolution =  ui->tableWidget->item(row,6)->text().toDouble();
+    sample.s3 =  ui->tableWidget->item(row,7)->text().toDouble();
+    sample.s4 =  ui->tableWidget->item(row,8)->text().toDouble();
+
+    if (ui->tableWidget->item(row,9)->text() == "")
+        sample.knauer = -100; //needed so that sample can be created without these values
+    else
+        sample.knauer =  ui->tableWidget->item(row,9)->text().toDouble();
+
+    if (ui->tableWidget->item(row,10)->text() == "")
+        sample.coarse_noMirror = -100;
+    else
+        sample.coarse_noMirror = ui->tableWidget->item(row,10)->text().toDouble();
+
+    ui->tableWidget->item(row,0)->setBackground(Qt::green);
+}
+
+bool SampleTable::validateSample(int row){
+
+    QTableWidget *t = ui->tableWidget;
+
+    for (int col = 0; col < t->columnCount(); col++){
+
+        if (t->item(row, 0)->text() == ""){
+            return false;}
+
+        if (!validateDoubles(t->item(row, col)->text()) && col != 0 && col < 9){
+            return false;
+        }
+
+        if (t->item(row,9)->text() != "" && !validateDoubles(t->item(row,9)->text()))
+            return false;
+
+        if (t->item(row,10)->text() != "" && !validateDoubles(t->item(row,10)->text()))
+            return false;
+    }
+    return true;
+
+}
+bool SampleTable::validateDoubles(QString input){
+
+    QDoubleValidator v(0, 1000, 16);
+    int pos = 0;
+
+    if (v.validate(input, pos) != QValidator::Acceptable)
+        return false;
+
+
+    return true;
+
+}
 
 QTableWidgetSelectionRange SampleTable::selectedRange() const
 {
@@ -271,6 +286,8 @@ void SampleTable::on_actionSave_and_Close_triggered()
 
 void SampleTable::closeEvent(QCloseEvent *event)
 {
+    updateSamplesSlot();
+
     if (areyousure()) {
             event->accept();
             emit closedSampWindow();
@@ -281,32 +298,34 @@ void SampleTable::closeEvent(QCloseEvent *event)
 //NEEDS FIXING!
 bool SampleTable::areyousure()
 {
-    /*
+
     bool missing = false;
-    for (int row = 0; row < sampleList.length(); row++){
-        qDebug() << "row: " << row;
-        for (int col = 0; col < ui->tableWidget->columnCount(); col++){
-            if(ui->tableWidget->item(row,col)->text().isEmpty()){
-             qDebug() << "somethings missing";   missing = true;
-            }
+    /*for (int row = 0; row < sampleList.length(); row++){
+        if (ui->tableWidget->item(row, 0)->background() == Qt::red)
+            missing = true;
+    }*/
+    int row = 0;
+    while (ui->tableWidget->item(row, 0)->text() != ""){
+        if (ui->tableWidget->item(row, 0)->background() == Qt::red)
+            missing = true;
+        row++;
+    }
+
+    if (missing){
+        const QMessageBox::StandardButton ret
+                = QMessageBox::warning(this, tr("Sample Table"),
+                                       tr("You missed something!\n"
+                                          "Are you sure you want to leave?"),
+                                       QMessageBox::Yes | QMessageBox::Cancel);
+        switch (ret) {
+        case QMessageBox::Yes:
+            return true;
+        case QMessageBox::Cancel:
+            return false;
+        default:
+            break;
         }
     }
-    if (missing == false)
-        return true;
-qDebug() << "Has it not returned??";
-    const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, tr("Sample Table"),
-                               tr("You missed something!\n"
-                                  "Are you sure you want to leave?"),
-                               QMessageBox::Yes | QMessageBox::Cancel);
-    switch (ret) {
-    case QMessageBox::Yes:
-        return true;
-    case QMessageBox::Cancel:
-        return false;
-    default:
-        break;
-    }*/
     return true;
 
 }

@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>SampleTable</class>
  <widget class="QMainWindow" name="SampleTable">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>904</width>
-    <height>450</height>
+    <width>1229</width>
+    <height>639</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,14 +24,47 @@
      <bold>true</bold>
     </font>
    </property>
+   <property name="editTriggers">
+    <set>QAbstractItemView::AllEditTriggers</set>
+   </property>
+   <property name="dragEnabled">
+    <bool>false</bool>
+   </property>
+   <property name="dragDropMode">
+    <enum>QAbstractItemView::NoDragDrop</enum>
+   </property>
+   <property name="defaultDropAction">
+    <enum>Qt::IgnoreAction</enum>
+   </property>
+   <property name="alternatingRowColors">
+    <bool>true</bool>
+   </property>
+   <property name="selectionBehavior">
+    <enum>QAbstractItemView::SelectRows</enum>
+   </property>
+   <property name="showGrid">
+    <bool>true</bool>
+   </property>
+   <property name="gridStyle">
+    <enum>Qt::SolidLine</enum>
+   </property>
    <property name="rowCount">
     <number>20</number>
    </property>
    <property name="columnCount">
-    <number>9</number>
+    <number>11</number>
    </property>
+   <attribute name="horizontalHeaderVisible">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>false</bool>
+   </attribute>
    <attribute name="horizontalHeaderDefaultSectionSize">
-    <number>90</number>
+    <number>105</number>
+   </attribute>
+   <attribute name="horizontalHeaderHighlightSections">
+    <bool>false</bool>
    </attribute>
    <row/>
    <row/>
@@ -159,6 +195,8 @@
      </font>
     </property>
    </column>
+   <column/>
+   <column/>
   </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">

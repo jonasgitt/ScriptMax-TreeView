@@ -21,9 +21,11 @@ public:
     QString phi_offset;
     double footprint;
     double resolution;
-    int knauer;
-    double s3;
-    double s4;
+    int knauer; //Switch Position
+    double s3; //slit 3
+    double s4; //slit 4
+    double coarse_noMirror; //so that we know if it hasnt been initialized yet
+    double psi;
 };
 
 class SampleTable : public QMainWindow
@@ -58,6 +60,9 @@ private:
     Ui::SampleTable *ui;
     void emit_closeSignal();
     bool areyousure();
+    bool validateDoubles(QString input);
+    void parseRow(NRSample &sample, int row);
+    bool validateSample(int row);
 signals:
     void closedSampWindow();
 private slots:
