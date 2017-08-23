@@ -1132,3 +1132,13 @@ void MainWindow::on_actionCollapse_triggered()
 }
 
 
+
+void MainWindow::on_actionSave_Tree_triggered()
+{
+    //SAVE TREE IN .TXT FILE
+}
+
+void MainWindow::on_actionOpen_Tree_triggered()
+{
+
+}
