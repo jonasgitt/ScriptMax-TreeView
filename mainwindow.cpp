@@ -139,60 +139,60 @@ void MainWindow::on_sampleTableButton_clicked()
 
 }
 
-//??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
 void MainWindow::on_actionOpen_Script_triggered()
 {
-    on_actionOpen_Tree_triggered();
-    /*
-    int line_count=0;
-    int tableStart;
-    QStringList sampleParameters;
-    QStringList rowEntries;
-    QString line[150];
+
 
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    fileName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
-                                           defaultLocation, tr("Script files (*.scp)"));
-    if (fileName!=""){
-        QFile file(fileName);
-        file.open(QIODevice::ReadOnly);
-        QTextStream in(&file);
-        //QString line = in.readAll();
-        while(!in.atEnd())
-        {
-            line[line_count]=in.readLine(); //line Qstring temporarily stores file content
-            if (line[line_count].contains("#TABLE"))
-                    tableStart = line_count;
-            line_count++;
-        }
-        file.close();
-        QTextCharFormat boldFormat;
-        boldFormat.setFontWeight(QFont::Bold);
-        setWindowTitle("ScriptMax - " + file.fileName());
-        for(int l=1; l < tableStart; l++){
-            sampleParameters = line[l].split(','); //sampleParameters stores the parameters that are listed at the start of line Qstring
-            if (sampleParameters.length() == 9){   //these parameters are then passed to a NRSample struct
-                mySampleTable->currentSample = l-1;
-                NRSample newSample;
-                newSample.title = sampleParameters[0];
-                newSample.translation = sampleParameters[1].toDouble();
-                newSample.height = sampleParameters[2].toDouble();
-                newSample.phi_offset = sampleParameters[3].toDouble();
-                newSample.footprint = sampleParameters[4].toDouble();
-                newSample.resolution = sampleParameters[5].toDouble();
-                newSample.s3 = sampleParameters[6].toDouble();
-                newSample.s4 = sampleParameters[7].toDouble();
-                newSample.knauer = sampleParameters[8].toInt();
-                mySampleTable->sampleList.append(newSample);
-            } else {
-                // pop up some error message
-            }
-        }
+    QString fName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
+                                                 defaultLocation, tr("Script files (*.txt)"));
+    QFile file(fName);
+    qDebug() << "file open" << file.open(QIODevice::ReadOnly);
 
-      //INSert commands into treeview
+    QTextStream in(&file);
+
+    int line_count=0;
+    int samplesStart;
+    QString lines[150];
+    while(!in.atEnd())
+    {
+        lines[line_count]=in.readLine(); qDebug() << "line:" << lines[line_count];
+        if (lines[line_count].contains("#SAMPLES"))
+                samplesStart = line_count + 1;
+        line_count++;
     }
-*/
+   qDebug() << "Table Start: " << samplesStart << " Table End: " << line_count;
+
+    QString data = file.readAll();
+    initTree(data);
+    file.close();
+
+    QStringList sampleParameters;
+
+    for (int line = 0; line < line_count; line++){
+        sampleParameters = lines[line + samplesStart].split(',');
+        if (sampleParameters.length() > 8){
+            mySampleTable->currentSample = line-samplesStart;
+            NRSample newSample;
+            newSample.title = sampleParameters[0];
+            newSample.translation = sampleParameters[1].toDouble();
+            newSample.height = sampleParameters[2].toDouble();
+            newSample.phi_offset = sampleParameters[3];
+            newSample.psi = sampleParameters[4].toDouble();
+            newSample.footprint = sampleParameters[5].toDouble();
+            newSample.resolution = sampleParameters[6].toDouble();
+            newSample.s3 = sampleParameters[7].toDouble();
+            newSample.s4 = sampleParameters[8].toDouble();
+            newSample.knauer = sampleParameters[9].toInt();
+            newSample.coarse_noMirror = sampleParameters[10].toInt();
+            mySampleTable->sampleList.append(newSample);
+        }
+        line++;
+    }
+
+
 }
+
 
 //Asks if changes to be saved, then initMainTable()
 void MainWindow::on_actionNew_Script_triggered()
@@ -516,7 +516,7 @@ QString MainWindow::saveSamplesString(){
         str += QString::number(mySampleTable->sampleList[i].knauer) + ",";
         str += QString::number(mySampleTable->sampleList[i].coarse_noMirror) + "\n";
     }
-    str += "\n\n\n";
+
     return str;
 }
 //--------------------------------------------------------------------------------------------------------------------------//
@@ -1154,12 +1154,5 @@ void MainWindow::on_actionSave_Tree_triggered()
 void MainWindow::on_actionOpen_Tree_triggered()
 {
 
-    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString fName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
-                                                 defaultLocation, tr("Script files (*.txt)"));
-    QFile file(fName);
-    file.open(QIODevice::ReadOnly);
-    QString data = file.readAll();
-    file.close();
-    initTree(data);
+
 }
