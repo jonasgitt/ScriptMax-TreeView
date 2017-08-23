@@ -88,7 +88,7 @@ public slots:
 
 
 private slots:
-    void on_checkBox_clicked();
+
     void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
     void on_actionOpen_Script_triggered();
@@ -99,18 +99,20 @@ private slots:
     void on_actionAbout_ScriptMax_triggered();
     void on_clearTableButton_clicked();
     void on_actionSave_GCL_file_triggered();
+    void on_actionOpen_Tree_triggered();
+    void on_actionSave_Tree_triggered();
 
     void on_saveButton_clicked();
+    void on_checkBox_clicked();
+    void on_PySaveCheckBox_clicked();
+    void on_PyToolButton_clicked();
+    void on_PySaveButton_clicked();
 
     void on_PythonButton_clicked();
     void updateProgBar(int row);
     void on_OGButton_clicked();
 
-    void on_PySaveCheckBox_clicked();
 
-    void on_PyToolButton_clicked();
-
-    void on_PySaveButton_clicked();
 
     //--------------//treeview//-----------------//
     void insertChild(QString ChildTitle);
@@ -126,7 +128,6 @@ private slots:
 
 
     void on_actionExpand_triggered();
-
     void on_actionCollapse_triggered();
 
 
@@ -146,7 +147,7 @@ private:
     void SaveToolButtons(bool OGorPy);
 
     //--------------//treeview//-----------------//
-    void initTree();
+    void initTree(QString data = "");
     void InsertParameters(QStringList parameters);
     QStringList parameterList(QVariant runOption);
     void parseTree();
@@ -159,6 +160,9 @@ private:
     QString readCombobox(QModelIndex index);
 
     bool WarningMessage(QString message);
+
+    QString saveTreeString();
+    QString saveSamplesString();
 
 };
 

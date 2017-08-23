@@ -15,9 +15,9 @@ class TreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    TreeModel(const QStringList &headers, QObject *parent = 0);
+    TreeModel(const QStringList &headers, const QString &data ="", QObject *parent = 0);
     ~TreeModel();
-//! [0] //! [1]
+
 
     QVariant data(const QModelIndex &index, int role) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
@@ -54,6 +54,8 @@ public:
 
     bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 private:
+    void setupModelData(const QStringList &lines, TreeItem *parent);
+
     void runSelected(TreeItem *comboParent);
     TreeItem *getItem(const QModelIndex &index) const;
 

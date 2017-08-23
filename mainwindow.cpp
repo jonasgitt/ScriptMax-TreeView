@@ -142,6 +142,8 @@ void MainWindow::on_sampleTableButton_clicked()
 //??saves parameter in NRSample struct, don't get what it is doing to contrast change and temperature information
 void MainWindow::on_actionOpen_Script_triggered()
 {
+    on_actionOpen_Tree_triggered();
+    /*
     int line_count=0;
     int tableStart;
     QStringList sampleParameters;
@@ -189,6 +191,7 @@ void MainWindow::on_actionOpen_Script_triggered()
 
       //INSert commands into treeview
     }
+*/
 }
 
 //Asks if changes to be saved, then initMainTable()
@@ -362,7 +365,6 @@ void MainWindow::on_checkBox_clicked()
 {
     QDateTime local(QDateTime::currentDateTime());
     QString fileLoc = loadSettings().toString();
-    qDebug() << "OGFileLoc" << fileLoc;
     QString fName = fileLoc + "runscript_" + local.toString("ddMMyy_hhmm") + ".gcl";
 
     if (ui->checkBox->isChecked()){
@@ -449,62 +451,73 @@ QVariant loadSettings()
 //makes document with only the most important infos. Need to delete or more clearly distinguish from save().
 void MainWindow::on_actionSave_Script_triggered()
 {
-    //the fileName is obtained in line 1247 i think. interface does not give option to name. must be automatic
-    if (fileName != "") {
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            // error message
-        } else {
-            // SAVE SAMPLE INFORMATION...
-            //================================================
-            QTextStream out(&file);
-            out << "#SAMPLES title, translation, height, phi_offset, footprint, resolution, s3, s4\n";
-            for(int i = 0; i < mySampleTable->sampleList.length(); i++){
-                out << mySampleTable->sampleList[i].title << ",";
-                out << QString::number(mySampleTable->sampleList[i].translation) << ",";
-                out << QString::number(mySampleTable->sampleList[i].height) << ",";
-                out << mySampleTable->sampleList[i].phi_offset << ",";
-                out << QString::number(mySampleTable->sampleList[i].footprint) << ",";
-                out << QString::number(mySampleTable->sampleList[i].resolution) << ",";
-                out << QString::number(mySampleTable->sampleList[i].s3) << ",";
-                out << QString::number(mySampleTable->sampleList[i].s4) << ",";
-                out << QString::number(mySampleTable->sampleList[i].knauer) << "\n";
-            }
-            out << "#TABLE\n";
-            //TODO:TREEVIEW SAVE INFO
-        }
-        file.close();
-    }
-    else{
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("You haven't specified a filename or directory.");
-        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Save);
-        int ret = msgBox.exec();
 
-        switch (ret) {
-          case QMessageBox::Save:
-              // Save was clicked
-              on_actionSave_Script_As_triggered();
-              initTree();
-              break;
-          case QMessageBox::Cancel:
-              // Cancel was clicked
-              break;
-          default:
-              // should never be reached
-              break;
-        }
-    }
 }
 
 void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
     fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
-                                           defaultLocation, tr("Script files (*.scp)"));
-    on_actionSave_Script_triggered();
+                                           defaultLocation, tr("Script files (*.txt)"));
+
+    QFile file(fileName);
+
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream stream(&file);
+        stream << saveTreeString() << saveSamplesString();
+    } else {
+            //error message
+    }
+    file.close();
+}
+
+QString MainWindow::saveTreeString(){
+
+    QAbstractItemModel *model = ui->TreeView->model();
+    QModelIndex p_index, c_index;
+    QString str;
+
+    for (int p_row = 0; p_row < model->rowCount(); p_row++){
+
+        for (int p_col = 0; p_col < 2; p_col++){
+            p_index = model->index(p_row, p_col, QModelIndex());
+            str += model->data(p_index).toString();
+            if (p_col == 0) str += "\t";
+        }
+        str += "\n";
+
+        p_index = model->index(p_row, 0);
+        for (int c_row = 0; c_row < model->rowCount(p_index); c_row++){
+            c_index = model->index(c_row, 0, p_index);
+            str += "    " + model->data(c_index).toString();
+            c_index = model->index(c_row, 1, p_index);
+            str += "\t" + model->data(c_index).toString() + "\n";
+        }
+    }
+    return str;
+
+}
+
+QString MainWindow::saveSamplesString(){
+
+    QString str;
+    str = "SAMPLEDATA\n\n";
+    str += "#SAMPLES title, translation, height, phi_offset, psi, footprint, resolution, s3, s4, knauer, coarse_noMirror\n";
+    for(int i = 0; i < mySampleTable->sampleList.length(); i++){
+        str += mySampleTable->sampleList[i].title + ",";
+        str += QString::number(mySampleTable->sampleList[i].translation) + ",";
+        str += QString::number(mySampleTable->sampleList[i].height) + ",";
+        str += mySampleTable->sampleList[i].phi_offset + ",";
+        str += QString::number(mySampleTable->sampleList[i].psi) + ",";
+        str += QString::number(mySampleTable->sampleList[i].footprint) + ",";
+        str += QString::number(mySampleTable->sampleList[i].resolution) + ",";
+        str += QString::number(mySampleTable->sampleList[i].s3) + ",";
+        str += QString::number(mySampleTable->sampleList[i].s4) + ",";
+        str += QString::number(mySampleTable->sampleList[i].knauer) + ",";
+        str += QString::number(mySampleTable->sampleList[i].coarse_noMirror) + "\n";
+    }
+    str += "\n\n\n";
+    return str;
 }
 //--------------------------------------------------------------------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
@@ -568,11 +581,17 @@ void MainWindow::updateProgBar(int row){
 //--------------------------------------------------------------------------------------------------------------------------//
 
 
-void MainWindow::initTree(){
+void MainWindow::initTree(QString data){
 
     QStringList headers;
     headers << tr("Action") << tr("Summary of Command") << tr("Input Valid") << tr("Further Information");
-    TreeModel *model = new TreeModel(headers);
+
+    TreeModel *model;
+    if (data == "")
+        model = new TreeModel(headers);
+    else
+        model = new TreeModel(headers , data);
+
     ui->TreeView->setModel(model);
     ui->TreeView->setAnimated(true);
 
@@ -838,7 +857,7 @@ QVector<QVariant> MainWindow::getChildData(int parentRow){
 
     QAbstractItemModel *model = ui->TreeView->model();
     QVector<QVariant> data;
-    QModelIndex comboIndex = model->index(parentRow,0, QModelIndex());//come along
+    QModelIndex comboIndex = model->index(parentRow,0, QModelIndex());
 
     for (int childRow = 0; childRow < model->rowCount(comboIndex); childRow++){
 
@@ -1089,21 +1108,15 @@ void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
 QString MainWindow::findSampNum(QString sampName){
     for (int i = 0; i < mySampleTable->sampleList.size(); i++){
         if (sampName == mySampleTable->sampleList[i].title){
-            //qDebug() << "sampnum: " << QString::number(i+1);
             return QString::number(i+1);
-    }
         }
-    qDebug() << "no luck";
+    }
     return "error";
 }
 
 
 void MainWindow::on_parseCommands_clicked()
 {
-    /*if (mySampleTable->sampleList.isEmpty()){
-         QMessageBox::warning(this, "Error" , "You must define a sample first.");
-        return;
-    }*/
     parseTree();
 }
 
@@ -1141,4 +1154,12 @@ void MainWindow::on_actionSave_Tree_triggered()
 void MainWindow::on_actionOpen_Tree_triggered()
 {
 
+    QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
+    QString fName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
+                                                 defaultLocation, tr("Script files (*.txt)"));
+    QFile file(fName);
+    file.open(QIODevice::ReadOnly);
+    QString data = file.readAll();
+    file.close();
+    initTree(data);
 }

@@ -1,0 +1,17 @@
+RunOptions      				Summary of Command
+Using a Component in Your Application	Generating code from forms
+    The Direct Approach			Using a form without any adjustments
+    The Single Inheritance Approach	Subclassing a form's base class
+    The Multiple Inheritance Approach	Subclassing the form itself
+    Automatic Connections		Connecting widgets using a naming scheme
+        A Dialog Without Auto-Connect	How to connect widgets without a naming scheme
+        A Dialog With Auto-Connect	Using automatic connections
+
+NIMA Pressure
+		Target Pressure		33
+Julabo								
+		Temperature		33
+		Run Control Max		90
+		Run Control Min		2
+
+
