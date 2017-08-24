@@ -4,14 +4,7 @@ def runscript():
     experimentsettings
 
     #====================================
-    #These should be changed with each sample change:
-    #====================================
-
-    #====================================
-    #====================================
-
-    #====================================
-     #Script body begins here:
+    #Script body begins here:
     #====================================
 
 

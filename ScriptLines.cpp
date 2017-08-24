@@ -26,31 +26,41 @@ QString writeSamples(QList<NRSample> samples){
         //scriptLine += ("            s" + QString::number(i+1) + " = create(\"NR_sample\")\n"); //sample numbering starts at 1
 
         QString temp = samples[i].title;
-        scriptLine += ("      s" + QString::number(i+1) + ".title = \""+temp+"\"\n");
+        scriptLine += ("          s" + QString::number(i+1) + ".title = \""+temp+"\"\n");
 
         temp = QString::number(samples[i].translation);
-        scriptLine += ("s" + QString::number(i+1) + ".translation = "+temp+"\n");
+        scriptLine += ("    s" + QString::number(i+1) + ".translation = "+temp+"\n");
 
         temp = QString::number(samples[i].height);
-        scriptLine += ("     s" + QString::number(i+1) + ".height = "+temp+"\n");
+        scriptLine += ("         s" + QString::number(i+1) + ".height = "+temp+"\n");
 
         temp = samples[i].phi_offset;
-        scriptLine += (" s" + QString::number(i+1) + ".phi_offset = "+temp+"\n");
+        scriptLine += ("     s" + QString::number(i+1) + ".phi_offset = "+temp+"\n");
+
+        temp = QString::number(samples[i].psi);
+        scriptLine += ("            s" + QString::number(i+1) + ".psi = "+temp+"\n");
 
         temp = QString::number(samples[i].footprint);
-        scriptLine += ("  s" + QString::number(i+1) + ".footprint = "+temp+"\n");
+        scriptLine += ("      s" + QString::number(i+1) + ".footprint = "+temp+"\n");
 
         temp = QString::number(samples[i].resolution);
-        scriptLine += (" s" + QString::number(i+1) + ".resolution = "+temp+"\n");
+        scriptLine += ("     s" + QString::number(i+1) + ".resolution = "+temp+"\n");
 
         temp = QString::number(samples[i].s3);
-        scriptLine += ("         s" + QString::number(i+1) + ".s3 = "+temp+"\n");
+        scriptLine += ("             s" + QString::number(i+1) + ".s3 = "+temp+"\n");
 
         temp = QString::number(samples[i].s4);
-        scriptLine += ("         s" + QString::number(i+1) + ".s4 = "+temp+"\n");
+        scriptLine += ("             s" + QString::number(i+1) + ".s4 = "+temp+"\n");
 
-        temp = QString::number(samples[i].knauer);
-        scriptLine += ("     s" + QString::number(i+1) + ".knauer = "+temp+"\n");
+        if (samples[i].knauer != -100){
+            temp = QString::number(samples[i].knauer);
+            scriptLine += ("         s" + QString::number(i+1) + ".knauer = "+temp+"\n");
+        }
+
+        if (samples[i].coarse_noMirror != -100){
+            temp = QString::number(samples[i].knauer);
+            scriptLine += ("s" + QString::number(i+1) + ".coarse_NoMirror = " + temp + "\n");
+        }
 
         scriptLine += "#====================================\n";
 
@@ -61,7 +71,7 @@ QString writeSamples(QList<NRSample> samples){
     for (int i=0; i < samples.length(); i++){
        scriptLine += "sample[" + QString::number(i+1) + "]=s" + QString::number(i+1) + "; ";
     }
-    scriptLine +=  + "\n";
+    scriptLine +=  "\n";
     return scriptLine;
 
 }
@@ -85,11 +95,13 @@ QString PyWriteSamples(QList <NRSample> samples){
         scriptLine += tabs + "'trans'             : " + QString::number(samples[i].translation) + ",\n";
         scriptLine += tabs + "'height'            : " + QString::number(samples[i].height) + ",\n";
         scriptLine += tabs + "'phi_offset'        : " + samples[i].phi_offset + ",\n";
-        //scriptLine += tabs + "'psi'             : " + QString::number(samples[i]. + ",\n";
+        scriptLine += tabs + "'psi'               : " + QString::number(samples[i].psi) + ",\n";
         scriptLine += tabs + "'footprint'         : " + QString::number(samples[i].footprint) + ",\n";
         scriptLine += tabs + "'resolution'        : " + QString::number(samples[i].resolution) + ",\n";
-        //scriptLine += tabs + "'coarse_nomirror'   : " + QString::number(samples[i]. + ",\n";
-        scriptLine += tabs + "'knauer'            : " + QString::number(samples[i].knauer) + ",\n";
+        if (samples[i].knauer != -100)
+            scriptLine += tabs + "'knauer'            : " + QString::number(samples[i].knauer) + ",\n";
+        if (samples[i].coarse_noMirror != -100)
+            scriptLine += tabs + "'coarse_nomirror'   : " + QString::number(samples[i].coarse_noMirror) + ",\n";
 
         scriptLine += tab + tab + "}\n";
         scriptLine += tab + "###########################################\n";
@@ -120,11 +132,11 @@ QString writeRun(runstruct &runvars, int runSM, bool Python){
        if (runvars.angles[i] != -1){
             if (runSM){
                 if (!Python) scriptLine += "runTime = runAngle:SM(s";
-                else if (Python) scriptLine += "\trunAngle_SM(sample[";
+                else if (Python) scriptLine += "    runAngle_SM(sample[";
             }
             else {
                 if (!Python) scriptLine += "runTime = runAngle(s";
-                else if (Python) scriptLine += "\trunAngle(sample[";
+                else if (Python) scriptLine += "    runAngle(sample[";
             }
             scriptLine += runvars.sampNum;
             if (Python) scriptLine += "]";
@@ -141,7 +153,7 @@ QString writeContrast(runstruct &runvars, int wait, bool Python){
     QString scriptLine;
 
     if (!Python) scriptLine  = "runTime = ";
-    else scriptLine = "\t";
+    else scriptLine = "    ";
 
     if (wait) scriptLine += "contrastChange:wait(";
     else scriptLine += "contrastChange(";
@@ -204,10 +216,10 @@ QString writeNIMA(runstruct &runvars, int mode, bool Python){
 
     if (mode == 4)
         if (!Python) scriptLine = "CSET target_pressure = " + QString::number(runvars.pressure) + "\n";
-        else scriptLine = "\tgoToPressure(" + QString::number(runvars.pressure) + ")\n";
+        else scriptLine = "    goToPressure(" + QString::number(runvars.pressure) + ")\n";
     else
         if (!Python) scriptLine = "CSET target_area = " + QString::number(runvars.area) + "\n";
-        else scriptLine = "\tgoToArea(" + QString::number(runvars.area) + ")\n";
+        else scriptLine = "    goToArea(" + QString::number(runvars.area) + ")\n";
 
     return scriptLine;
 }
@@ -222,7 +234,7 @@ QString writeTransm(runstruct &runvars, bool Python){
         scriptLine += "runTime = runTrans(s" + runvars.sampNum;
     }
     else
-        scriptLine = "\ttransmission(sample[" + runvars.sampNum + "] ,\"" + runvars.sampName + "\"";
+        scriptLine = "    transmission(sample[" + runvars.sampNum + "] ,\"" + runvars.sampName + "\"";
     for (int i = 0; i < 4; i++){
         scriptLine += "," + QString::number(runvars.angles[i]);
     }
