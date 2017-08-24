@@ -48,7 +48,7 @@ public:
 
     void defineSamples();
 
-    void updateRunTime(double angle);
+    void updateRunTime(double uAmps);
 
     void samplestoPlainTextEdit();
     void samplestoPyTextEdit();

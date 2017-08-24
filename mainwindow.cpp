@@ -50,13 +50,15 @@ MainWindow::~MainWindow()
     delete mySampleTable;
 }
 
-void MainWindow::updateRunTime(double angle){
-    int secs;
+void MainWindow::updateRunTime(double uAmps){
+    int secs =0 ;
+
     if(ui->instrumentCombo->currentText() == "CRISP" || ui->instrumentCombo->currentText() == "SURF"){
-        secs = static_cast<int>(angle/160*3600); // TS2
+        secs += static_cast<int>(uAmps/160*3600); // TS2
     } else {
-        secs = static_cast<int>(angle/40*3600); // TS2
+        secs += static_cast<int>(uAmps/40*3600); // TS2
     }
+
     runTime = runTime.addSecs(secs);
     ui->timeEdit->setTime(runTime);
     return;
@@ -958,7 +960,9 @@ void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> para
     bool runcontrol;
 
     if (parseJulabo(params, runvars, runcontrol)){
-        qDebug()<< "PrinTJulabo: " << runvars.JTemp;
+        int secs = static_cast<int>(runvars.flow/runvars.volume*60);
+        ui->timeEdit->setTime(runTime.addSecs(secs));
+
         ui->plainTextEdit->insertPlainText(writeJulabo(runvars, runcontrol)); //implement runcontrol
         ui->PyScriptBox->insertPlainText(pyWriteJulabo(runvars, runcontrol));
         setJulaboSummary(runvars, runcontrol, row);
@@ -1009,6 +1013,8 @@ void MainWindow::setContrastSummary(runstruct &runvars, int row){
 void MainWindow::printRunTr(runstruct &runvars, int row, QVector<QVariant> &params){
 
     if (parseTransm(params, runvars)){
+        updateRunTime(runvars.uAmpsT);
+
         ui->plainTextEdit->insertPlainText(writeTransm(runvars, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeTransm(runvars, PYTHON));
         setTransmSummary(runvars, row);
@@ -1031,6 +1037,9 @@ void MainWindow::setTransmSummary(runstruct &runvars, int row){
 void MainWindow::printRun(runstruct &runvars, int row, QVector<QVariant> &params){
 
     if (parseRun(params, runvars)){
+        for (int i= 0; i < 3; i++){
+            updateRunTime(runvars.uAmps[i]);
+        }
         ui->plainTextEdit->insertPlainText(writeRun(runvars, 0, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeRun(runvars, 0, PYTHON));
         setRunSummary(runvars, row);
@@ -1052,6 +1061,9 @@ void MainWindow::setRunSummary(runstruct &runvars, int row){
 void MainWindow::printRunSM(runstruct &runvars, int row, QVector<QVariant> &params){
 
     if (parseRun(params, runvars)){
+        for (int i= 0; i < 3; i++){
+            updateRunTime(runvars.uAmps[i]);
+        }
         ui->plainTextEdit->insertPlainText(writeRun(runvars, WithSM, OPENGENIE));
         ui->PyScriptBox->insertPlainText(writeRun(runvars, WithSM, PYTHON));
         setRunSummary(runvars, row);
