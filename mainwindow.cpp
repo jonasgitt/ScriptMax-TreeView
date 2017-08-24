@@ -35,89 +35,20 @@ MainWindow::MainWindow(QWidget *parent) :
     fileName = "";
     ui->saveButton->setEnabled(false);
 
-    //Script is in OpenGenie at launch
-    ui->OGButton->setChecked(true);
     OGhighlighter = new Highlighter(ui->plainTextEdit->document());
     pyhighlighter = new KickPythonSyntaxHighlighter(ui->PyScriptBox->document());
 
-    mySampleTable = new SampleTable(); // Be sure to destroy this window somewhere
+    mySampleTable = new SampleTable();
 
     initTree();
     parseTree();
-
 }
 
-void MainWindow::writeBackbone(){
-
-    ui->plainTextEdit->clear();
-    pyWriteBackbone();
-
-    QString BFileName;
-    //Get Backbone from .txt file
-    if (ui->OGButton->isChecked())
-        BFileName = ":/OGbackbone.txt";
-    else if (ui->PythonButton->isChecked())
-        BFileName = ":/PyBackbone.txt";
-
-    QFile BFile(BFileName);
-
-    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open OpenGenie Backbone File");
-    }
-
-    QTextStream in(&BFile);
-    QString OGtext = in.readAll();
-    ui->plainTextEdit->setPlainText(OGtext);
-
-    BFile.close();
-
-
-    ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
-    ui->plainTextEdit->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
-    for (int i=0; i < mySampleTable->sampleList.length(); i++){
-        ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1)); // sample numbering starts with 1
-    }
+MainWindow::~MainWindow()
+{
+    delete ui;
+    delete mySampleTable;
 }
-
-void MainWindow::pyWriteBackbone(){
-
-    ui->PyScriptBox->clear();
-    QString BFileName;
-    BFileName = ":/PyBackbone.txt";
-
-    QFile BFile(BFileName);
-
-    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
-           QMessageBox::warning(this, "Error" , "Couldn't open Python Backbone File");
-    }
-
-    QTextStream in(&BFile);
-    QString Pytext = in.readAll();
-    ui->PyScriptBox->setPlainText(Pytext);
-
-    BFile.close();
-
-    ui->PyScriptBox->find("def runscript()"); //positions the cursor to insert instructions
-    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-}
-
-
-void MainWindow::samplestoPlainTextEdit(){
-    ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
-    QList<NRSample> samples = mySampleTable->sampleList;
-    ui->plainTextEdit->insertPlainText(writeSamples(samples));
-}
-
-void MainWindow::samplestoPyTextEdit(){
-
-    bool found = ui->PyScriptBox->find("def experimentsettings():");   qDebug() << "found it? " << found;
-    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
-    QList<NRSample> samples = mySampleTable->sampleList;
-    ui->PyScriptBox->insertPlainText(PyWriteSamples(samples));
-}
-
 
 void MainWindow::updateRunTime(double angle){
     int secs;
@@ -139,6 +70,8 @@ void MainWindow::on_sampleTableButton_clicked()
 
 }
 
+//------------------------------------------------------------------------------------------------------//
+//------------------------LOADING DATA FROM FILE--------------------------------------------------------//
 void MainWindow::on_actionOpen_Script_triggered()
 {
 
@@ -157,6 +90,7 @@ void MainWindow::on_actionOpen_Script_triggered()
 
 void MainWindow::initSampleTable(QString data){
 
+    mySampleTable->sampleList.clear();
     int samplesStart;
     QStringList lines = data.split(QString("\n"));
     for (int i = 0; i < lines.length(); i++)
@@ -189,7 +123,8 @@ void MainWindow::initSampleTable(QString data){
     }
 
 }
-
+//------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------//
 
 //Asks if changes to be saved, then initMainTable()
 void MainWindow::on_actionNew_Script_triggered()
@@ -221,12 +156,7 @@ void MainWindow::on_actionNew_Script_triggered()
     }
 }
 
-//this destructor is never actually used
-MainWindow::~MainWindow()
-{
-    delete ui;
-    delete mySampleTable;
-}
+
 
 //Quits Program
 void MainWindow::on_actionQuit_triggered()
@@ -242,7 +172,6 @@ void MainWindow::on_actionHow_To_triggered()
     QString str(QDir::currentPath());
     str.append("/ScriptMax Version 1_dcumentation.pdf");
     QDesktopServices::openUrl(QUrl::fromLocalFile(str));
-    //QDesktopServices::openUrl(QUrl("file:///", QUrl::TolerantMode));
 }
 
 //Shows About Box
@@ -310,6 +239,7 @@ bool MainWindow::areyousure()
     return true;
 }
 
+//-------------------------------------------------------------------------------------------------------//
 //-------------------------------------------------------------------------------------------------------//
 //--------------------------------SAVE STUFF-------------------------------------------------------------//
 //-------------------------------------------------------------------------------------------------------//
@@ -528,62 +458,8 @@ QString MainWindow::saveSamplesString(){
 
     return str;
 }
+//------------------------------------------END OF SAVE STUFF---------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
-//--------------------------------------------------------------------------------------------------------------------------//
-//----------------------------------------------NOT IN USE------------------------------------------------------------------//
-//--------------------------------------------------------------------------------------------------------------------------//
-
-
-void MainWindow::on_PythonButton_clicked()
-{
-    pyhighlighter = new KickPythonSyntaxHighlighter(ui->plainTextEdit->document());
-    writeBackbone();
-}
-
-
-void MainWindow::on_OGButton_clicked()
-{
-    OGhighlighter = new Highlighter(ui->plainTextEdit->document());
-    writeBackbone();
-}
-
-
-void MainWindow::ProgressBar(int secs, int row){
-
-
-    bar = new QProgressBar();
-    //bar->setMinimumSize(73, ui->tableWidget_1->rowHeight(1));//need this to fill box
-   // ui->tableWidget_1->setCellWidget(row,10,bar);
-
-    timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(updateProgBar(row)));
-    timer->start(secs*10);
-
-}
-
-void MainWindow::updateProgBar(int row){
-
-    if(counter <= 100)
-    {
-        counter++;
-        bar->setValue(counter);
-    }
-    else
-    {
-        timer->stop();
-        delete timer;
-      //  ui->tableWidget_1->removeCellWidget(row,10);
-
-        //ui->tableWidget_1->setIconSize(QSize(90,ui->tableWidget_1->rowHeight(0)));
-        QTableWidgetItem *icon_item = new QTableWidgetItem;
-
-        icon_item->setIcon(QIcon(":/tick.png"));
-        //ui->tableWidget_1->setItem(row, 10, icon_item);
-
-    }
-
-}
-
 //--------------------------------------------------------------------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
 //----------------------------------------------TREEVIEW------------------------------------------------------------------//
@@ -599,8 +475,10 @@ void MainWindow::initTree(QString data){
     if (data == ""){
         model = new TreeModel(headers);
     }
-    else
+    else{
+        clearChildren();
         model = new TreeModel(headers , data);
+    }
 
     ui->TreeView->setModel(model);
     ui->TreeView->setAnimated(true);
@@ -627,11 +505,16 @@ void MainWindow::initTree(QString data){
 
     ui->TreeView->setEditTriggers(QAbstractItemView::AnyKeyPressed);
     ui->TreeView->setEditTriggers(QAbstractItemView::DoubleClicked);
-    ui->TreeView->resizeColumnToContents(0);
+    ui->TreeView->setColumnWidth(0, 150);
     ui->TreeView->setColumnWidth(1, 170);
     ui->TreeView->setColumnWidth(2, 65);
 }
 
+void MainWindow::clearChildren(const QModelIndex &parent){
+    while (ui->TreeView->model()->hasChildren(parent)){
+        ui->TreeView->model()->removeRow(0, parent);
+    }
+}
 
 void MainWindow::updateComboSlot(QModelIndex topLeft){
 
@@ -642,9 +525,7 @@ void MainWindow::updateComboSlot(QModelIndex topLeft){
     QVariant newdata = ui->TreeView->model()->data(topLeft);
     if (newdata == "Choose a Command...") return;
 
-   while (ui->TreeView->model()->hasChildren(topLeft)){
-       ui->TreeView->model()->removeRow(0, topLeft);
-   }
+   clearChildren(topLeft);
 
    if (!ui->TreeView->model()->parent(topLeft).isValid() && topLeft.column() == 0){
        InsertParameters(parameterList(newdata));
@@ -751,9 +632,11 @@ void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
        QModelIndex RowIndex = model->index(row,0, QModelIndex()); //parent row
        QModelIndex comboIndex = model->index(0, 1, RowIndex); //
       QString option = model->data(RowIndex).toString();
-        if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(comboIndex))){
-          setSampleComboBox(comboIndex);
-        }
+        //if (qobject_cast<QComboBox*>(ui->TreeView->indexWidget(comboIndex))){
+        //  setSampleComboBox(comboIndex);
+        //}
+        if(option.contains("Run") || option == "Contrast Change")
+            setSampleComboBox(comboIndex);
     }
 }
 
@@ -889,6 +772,75 @@ QString MainWindow::readCombobox(QModelIndex index){
     QComboBox* box = qobject_cast<QComboBox*>(ui->TreeView->indexWidget(index));
     return box->currentText();
 }
+
+
+//------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------//
+//-----------------------------------------PRINTING FUNCTIONS--------------------------------------------//
+//------------------------------------------------------------------------------------------------------//
+void MainWindow::writeBackbone(){
+
+    ui->plainTextEdit->clear();
+    pyWriteBackbone();
+
+    QFile BFile(":/OGbackbone.txt");
+
+    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
+           QMessageBox::warning(this, "Error" , "Couldn't open OpenGenie Backbone File");
+    }
+
+    QTextStream in(&BFile);
+    QString OGtext = in.readAll();
+    ui->plainTextEdit->setPlainText(OGtext);
+
+    BFile.close();
+
+    ui->plainTextEdit->find("GLOBAL runTime"); //positions the cursor to insert instructions
+    ui->plainTextEdit->moveCursor(QTextCursor::EndOfLine, QTextCursor::MoveAnchor);
+    for (int i=0; i < mySampleTable->sampleList.length(); i++){
+        ui->plainTextEdit->insertPlainText(" s" + QString::number(i+1)); // sample numbering starts with 1
+    }
+}
+
+void MainWindow::pyWriteBackbone(){
+
+    ui->PyScriptBox->clear();
+    QString BFileName;
+    BFileName = ":/PyBackbone.txt";
+
+    QFile BFile(BFileName);
+
+    if (!BFile.open(QFile::ReadOnly | QFile::Text)){
+           QMessageBox::warning(this, "Error" , "Couldn't open Python Backbone File");
+    }
+
+    QTextStream in(&BFile);
+    QString Pytext = in.readAll();
+    ui->PyScriptBox->setPlainText(Pytext);
+
+    BFile.close();
+
+    ui->PyScriptBox->find("def runscript()"); //positions the cursor to insert instructions
+    ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+}
+
+
+void MainWindow::samplestoPlainTextEdit(){
+    ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor); //move cursor down one more line
+    QList<NRSample> samples = mySampleTable->sampleList;
+    ui->plainTextEdit->insertPlainText(writeSamples(samples));
+}
+
+void MainWindow::samplestoPyTextEdit(){
+
+    bool found = ui->PyScriptBox->find("def experimentsettings():");   qDebug() << "found it? " << found;
+    ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
+    QList<NRSample> samples = mySampleTable->sampleList;
+    ui->PyScriptBox->insertPlainText(PyWriteSamples(samples));
+}
+
 
 void MainWindow::printCommands(QString command, QVector<QVariant> params, int row){
 
@@ -1110,6 +1062,11 @@ void MainWindow::printRunSM(runstruct &runvars, int row, QVector<QVariant> &para
 
 }
 
+
+//----------------------------------------END OF PRINTING FUNCTIONS----------------------------------------//
+//------------------------------------------------------------------------------------------------------//
+//---------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------//
 void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
 
     QModelIndex index = ui->TreeView->model()->index(rowNumber, 2, QModelIndex());
@@ -1127,6 +1084,7 @@ QString MainWindow::findSampNum(QString sampName){
     }
     return "error";
 }
+
 
 
 void MainWindow::on_parseCommands_clicked()

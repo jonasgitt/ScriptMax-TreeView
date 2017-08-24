@@ -49,20 +49,6 @@
     <bool>false</bool>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="5" column="0">
-     <widget class="QRadioButton" name="OGButton">
-      <property name="text">
-       <string>OpenGenie</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
-     <widget class="QRadioButton" name="PythonButton">
-      <property name="text">
-       <string>Python</string>
-      </property>
-     </widget>
-    </item>
     <item row="1" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="enabled">
@@ -79,7 +65,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="Builder">
        <attribute name="title">

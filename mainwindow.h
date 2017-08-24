@@ -106,10 +106,6 @@ private slots:
     void on_PyToolButton_clicked();
     void on_PySaveButton_clicked();
 
-    void on_PythonButton_clicked();
-    void updateProgBar(int row);
-    void on_OGButton_clicked();
-
 
 
     //--------------//treeview//-----------------//
@@ -122,6 +118,7 @@ private slots:
     void on_removeCommands_clicked();
     void on_parseCommands_clicked();
     void updateSampleBoxes();
+    void clearChildren(const QModelIndex &parent = QModelIndex());
     //--------------//treeview//-----------------//
 
 
