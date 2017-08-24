@@ -74,12 +74,10 @@ void MainWindow::on_sampleTableButton_clicked()
 
 //------------------------------------------------------------------------------------------------------//
 //------------------------LOADING DATA FROM FILE--------------------------------------------------------//
-void MainWindow::on_actionOpen_Script_triggered()
+void MainWindow::on_loadData_triggered()
 {
-
-
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    QString fName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
+    QString fName = QFileDialog::getOpenFileName(this,tr("Load Data"), \
                                                  defaultLocation, tr("Script files (*.txt)"));
     QFile file(fName);
     file.open(QIODevice::ReadOnly);
@@ -128,42 +126,12 @@ void MainWindow::initSampleTable(QString data){
 //------------------------------------------------------------------------------------------------------//
 //------------------------------------------------------------------------------------------------------//
 
-//Asks if changes to be saved, then initMainTable()
-void MainWindow::on_actionNew_Script_triggered()
-{
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("All changes will be lost.");
-    msgBox.setInformativeText("Do you want to save your changes?");
-    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Save);
-    int ret = msgBox.exec();
-
-    switch (ret) {
-      case QMessageBox::Save:
-          // Save was clicked
-          on_actionSave_Script_triggered();
-          initTree();
-          break;
-      case QMessageBox::Discard:
-          // Don't Save was clicked
-          initTree();
-          break;
-      case QMessageBox::Cancel:
-          // Cancel was clicked
-          break;
-      default:
-          // should never be reached
-          break;
-    }
-}
 
 
 
 //Quits Program
 void MainWindow::on_actionQuit_triggered()
 {
-    on_actionNew_Script_triggered();
     QApplication::quit();
 }
 
@@ -184,31 +152,7 @@ void MainWindow::on_actionAbout_ScriptMax_triggered()
     msgBox.exec();
 }
 
-//Clears Table
-void MainWindow::on_clearTableButton_clicked()
-{
-    bool sure;
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Warning);
-    msgBox.setText("Warning");
-    msgBox.setInformativeText("Are you sure you want to clear the table? All entries will be lost."\
-    "to clear the script, go to File>New Script");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Yes);
-    int ret = msgBox.exec();
-    switch (ret) {
-       case QMessageBox::Yes:
-           sure = true;
-           break;
-       case QMessageBox::Cancel:
-           sure = false;
-           break;
-       default:
-           // should never be reached
-           break;
-     }
-    if (sure) initTree();
-}
+
 
 
 
@@ -729,11 +673,11 @@ void MainWindow::parseTree(){
     samplestoPyTextEdit();
 
     ui->plainTextEdit->moveCursor(QTextCursor::Start);
-    bool foundr = ui->plainTextEdit->find("runTime=0"); qDebug() << "found runtime " << foundr;
+    bool foundr = ui->plainTextEdit->find("runTime=0");
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
     ui->PyScriptBox->moveCursor(QTextCursor::Start);
-    bool found = ui->PyScriptBox->find("#Script body begins here:"); qDebug() << "found py " << found;
+    bool found = ui->PyScriptBox->find("#Script body begins here:");
     ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
     ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 
@@ -837,7 +781,7 @@ void MainWindow::samplestoPlainTextEdit(){
 
 void MainWindow::samplestoPyTextEdit(){
 
-    bool found = ui->PyScriptBox->find("def experimentsettings():");   qDebug() << "found it? " << found;
+    bool found = ui->PyScriptBox->find("def experimentsettings():");
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
     QList<NRSample> samples = mySampleTable->sampleList;
     ui->PyScriptBox->insertPlainText(PyWriteSamples(samples));
@@ -960,9 +904,6 @@ void MainWindow::printJulabo(runstruct &runvars, int row, QVector<QVariant> para
     bool runcontrol;
 
     if (parseJulabo(params, runvars, runcontrol)){
-        int secs = static_cast<int>(runvars.flow/runvars.volume*60);
-        ui->timeEdit->setTime(runTime.addSecs(secs));
-
         ui->plainTextEdit->insertPlainText(writeJulabo(runvars, runcontrol)); //implement runcontrol
         ui->PyScriptBox->insertPlainText(pyWriteJulabo(runvars, runcontrol));
         setJulaboSummary(runvars, runcontrol, row);
@@ -987,11 +928,14 @@ void MainWindow::printContrast(runstruct &runvars, int row, QVector<QVariant> pa
     runvars.knauer = mySampleTable->sampleList[runvars.sampNum.toInt()-1].knauer; //causes runtime crash if
 
     if (parseContrast(params, runvars)){
-           ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
-           ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
-           setContrastSummary(runvars, row);
-           setColor(Qt::green, row);
-       }
+        int secs = static_cast<int>(runvars.flow/runvars.volume*60);
+        ui->timeEdit->setTime(runTime.addSecs(secs));
+
+        ui->plainTextEdit->insertPlainText(writeContrast(runvars, 0, OPENGENIE)); //implement "Wait!"
+        ui->PyScriptBox->insertPlainText(writeContrast(runvars, 0, PYTHON));
+        setContrastSummary(runvars, row);
+        setColor(Qt::green, row);
+    }
     else{
         setColor(Qt::red, row);
     }
@@ -1083,8 +1027,6 @@ void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
 
     QModelIndex index = ui->TreeView->model()->index(rowNumber, 2, QModelIndex());
     bool success = ui->TreeView->model()->setData(index, QVariant(QBrush (QColor(color))), Qt::BackgroundRole);
-    if (!success)
-        qDebug() << "Couldn't set Color";
 }
 
 
@@ -1107,13 +1049,14 @@ void MainWindow::on_parseCommands_clicked()
 void MainWindow::on_removeCommands_clicked()
 {
     QAbstractItemModel *model = ui->TreeView->model();
-    if (!model->index(0,0).isValid()) return;
+
+    //Return if we're inside a child.
+    if (!model->index(0,0).isValid())
+        return;
 
     QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
-    if (!ui->TreeView->model()->parent(index).isValid()){
-        if (model->removeRow(index.row(), index.parent()))
-            qDebug() << "FIx this";
-}
+    if (!ui->TreeView->model()->parent(index).isValid())
+        model->removeRow(index.row(), index.parent());
 }
 
 
@@ -1130,4 +1073,30 @@ void MainWindow::on_actionCollapse_triggered()
 
 
 
+void MainWindow::on_clear_triggered()
+{
+    bool sure;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Warning");
+    msgBox.setInformativeText("Are you sure you want to clear the tables? All entries will be lost.");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    int ret = msgBox.exec();
+    switch (ret) {
+       case QMessageBox::Yes:
+           sure = true;
+           break;
+       case QMessageBox::Cancel:
+           sure = false;
+           break;
+       default:
+           // should never be reached
+           break;
+     }
+    if (sure) {
+        mySampleTable->sampleList.clear();
+        clearChildren();
+    }
+}
 

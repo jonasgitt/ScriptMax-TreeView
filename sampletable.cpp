@@ -143,7 +143,7 @@ void SampleTable::parseRow(NRSample &sample, int row){
 
     //Referring to sampleList directly because by this point the new sample has already been appended, since parseRow...
     //...is called every time a cell changes. And appending will, by design, happen before row is filled completely.
-    if (sampleList.length()){
+    if (row < sampleList.length()){
         if (ui->tableWidget->item(row,9)->text() == "")
            sampleList[row].knauer = -100; //needed so that sample can be created without these values
         else
@@ -251,28 +251,8 @@ void SampleTable::on_actionPaste_triggered()
                 ui->tableWidget->item(row, column)->setText(columns[j]);
         }
     }
-    //somethingChanged();
+
 }
-
-//change to deleteRow
-//causes segfault when table tries to parse deleted widgetitems?
-void SampleTable::on_actionDelete_triggered()
-{qDebug() << "is updatesampleslot called after deletion?";
-    QList<QTableWidgetItem *> items = ui->tableWidget->selectedItems();
-    if (!items.isEmpty()) {
-        foreach (QTableWidgetItem *item, items)
-            item->setText(".");
-        //somethingChanged();
-    }
-}
-
-void SampleTable::on_actionCut_triggered()
-{
-    on_actionCopy_triggered();
-    on_actionDelete_triggered();
-}
-
-
 
 SampleTable::~SampleTable()
 {
@@ -329,4 +309,20 @@ bool SampleTable::areyousure()
     }
     return true;
 
+}
+
+void SampleTable::on_actionDeleteRow_triggered()
+{
+    QTableWidgetSelectionRange range = selectedRange();
+
+    if (selectedRange().rowCount() != 1 || selectedRange().columnCount() != ui->tableWidget->columnCount())
+        return;
+
+    int row = selectedRange().topRow();
+
+    if (row < sampleList.size())
+        sampleList.removeAt(row);
+
+    for(int col = 0; col < ui->tableWidget->columnCount(); col++)
+        ui->tableWidget->item(row, col)->setText("");
 }

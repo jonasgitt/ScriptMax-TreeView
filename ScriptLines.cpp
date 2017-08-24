@@ -289,7 +289,7 @@ bool parseContrast(QVector<QVariant>variables, runstruct &runvars){
     runvars.volume = variables[6].toDouble();
 
     if (fabs(percentSum -100)>= 0.1 || runvars.flow <= 0.0 || runvars.volume <= 0.0){
-        qDebug() << percentSum;return false;
+        return false;
        }
 
     return true;

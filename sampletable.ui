@@ -209,23 +209,10 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionSave_and_Close"/>
-   <addaction name="actionCut"/>
    <addaction name="actionCopy"/>
    <addaction name="actionPaste"/>
    <addaction name="actionDeleteRow"/>
   </widget>
-  <action name="actionCut">
-   <property name="icon">
-    <iconset resource="ScriptMax_resource.qrc">
-     <normaloff>:/edit_cut.png</normaloff>:/edit_cut.png</iconset>
-   </property>
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
-  </action>
   <action name="actionCopy">
    <property name="icon">
     <iconset>

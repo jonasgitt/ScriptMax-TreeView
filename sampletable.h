@@ -50,8 +50,6 @@ public:
 public slots:
     void on_actionCopy_triggered();
     void on_actionPaste_triggered();
-    void on_actionDelete_triggered();
-    void on_actionCut_triggered();
 
     void displaySamples();
     void updateSamplesSlot();
@@ -67,6 +65,7 @@ signals:
     void closedSampWindow();
 private slots:
     void on_actionSave_and_Close_triggered();
+    void on_actionDeleteRow_triggered();
 };
 
 #endif // SAMPLETABLE_H

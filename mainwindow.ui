@@ -65,7 +65,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="Builder">
        <attribute name="title">
@@ -631,8 +631,8 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_Script"/>
-    <addaction name="actionOpen_Script"/>
+    <addaction name="clear"/>
+    <addaction name="loadData"/>
     <addaction name="actionSave_Script"/>
     <addaction name="actionSave_Script_As"/>
     <addaction name="separator"/>
@@ -645,9 +645,6 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionCut"/>
-    <addaction name="actionCopy"/>
-    <addaction name="actionPaste"/>
     <addaction name="actionDelete"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -674,13 +671,10 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionCut"/>
-   <addaction name="actionCopy"/>
-   <addaction name="actionPaste"/>
    <addaction name="actionExpand"/>
    <addaction name="actionCollapse"/>
   </widget>
-  <action name="actionOpen_Script">
+  <action name="loadData">
    <property name="text">
     <string>Load Data from File</string>
    </property>
@@ -710,42 +704,6 @@
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
-  <action name="actionCut">
-   <property name="icon">
-    <iconset resource="ScriptMax_resource.qrc">
-     <normaloff>:/edit_cut.png</normaloff>:/edit_cut.png</iconset>
-   </property>
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
-  </action>
-  <action name="actionCopy">
-   <property name="icon">
-    <iconset resource="ScriptMax_resource.qrc">
-     <normaloff>:/copy (1).png</normaloff>:/copy (1).png</iconset>
-   </property>
-   <property name="text">
-    <string>Copy</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
-   </property>
-  </action>
-  <action name="actionPaste">
-   <property name="icon">
-    <iconset resource="ScriptMax_resource.qrc">
-     <normaloff>:/paste.png</normaloff>:/paste.png</iconset>
-   </property>
-   <property name="text">
-    <string>Paste</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V</string>
-   </property>
-  </action>
   <action name="actionDelete">
    <property name="text">
     <string>Delete</string>
@@ -759,12 +717,12 @@
     <string>Save OpenGenie Script</string>
    </property>
   </action>
-  <action name="actionNew_Script">
+  <action name="clear">
    <property name="checkable">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>New Script</string>
+    <string>Clear Tables</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -828,24 +786,7 @@
  <resources>
   <include location="ScriptMax_resource.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>actionCopy</sender>
-   <signal>hovered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>510</x>
-     <y>265</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
  <slots>
   <slot>onRunSelected(int)</slot>
   <slot>slot1(QTableWidgetItem*)</slot>

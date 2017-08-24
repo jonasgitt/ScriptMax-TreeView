@@ -226,66 +226,6 @@ Qt::DropActions TreeModel::supportedDropActions() const
     return Qt::CopyAction | Qt::MoveAction;//deleting this results in being unable to drop
 }
 
-bool TreeModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent){
-
-    if(!canDropMimeData(data, action, row, column, parent))
-            return false;
-
-    if (action == Qt::IgnoreAction)
-        return true;
-
-    int beginRow;
-
-    if (row != -1)
-        beginRow = row;
-    else if (parent.isValid()){//will be true
-        beginRow = parent.row();
-     qDebug() << "BEGINROW: " << beginRow;
-    }
-    else
-        beginRow = rowCount(QModelIndex());
-
-
-    //CONTINUE FROM HERE
-    QModelIndex grandParent = parent.parent();
-    //insertRow(beginRow, grandParent);
-    //setData(parent.child(beginRow, 0), data);
-
-    //moveRow(parent, 3, QModelIndex(), parent.parent().child(0,0));
-
-
-    qDebug() << "when is this even called!?!?";
-
-    return true;
-
-}
-
-bool TreeModel::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
-{
-    Q_UNUSED(action);
-    Q_UNUSED(row);
-    Q_UNUSED(data);
-
-    if (column > 0){
-        qDebug() << "Error here";
-        return false;
-    }
-qDebug() << "Dropped into row: " << parent.row();
-qDebug() << "Target row: " << row << "Target Column: " << column;
-
-    if (rowCount(parent) <= 0){
-        //return false;
-    }
-
-    if (row < 0){ //row = -1 means item dropped directly on parent
-       //return false;
-}
-    if (parent.parent() != QModelIndex()){
-        qDebug() << "oder hier??";
-        return false;
-    }
-    return true;
-}
 
 void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
 {
@@ -343,4 +283,66 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
 
         ++number;
     }
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------------------//
+//-------------------------------DRAG/DROP STUFF (not working)------------------------------------------------------------------//
+//------------------------------------------------------------------------------------------------------------------------------//
+bool TreeModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent){
+
+    if(!canDropMimeData(data, action, row, column, parent))
+            return false;
+
+    if (action == Qt::IgnoreAction)
+        return true;
+
+    int beginRow;
+
+    if (row != -1)
+        beginRow = row;
+    else if (parent.isValid()){//will be true
+        beginRow = parent.row();
+     qDebug() << "BEGINROW: " << beginRow;
+    }
+    else
+        beginRow = rowCount(QModelIndex());
+
+
+    //CONTINUE FROM HERE
+    QModelIndex grandParent = parent.parent();
+    //insertRow(beginRow, grandParent);
+    //setData(parent.child(beginRow, 0), data);
+
+    //moveRow(parent, 3, QModelIndex(), parent.parent().child(0,0));
+
+    return true;
+
+}
+
+bool TreeModel::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+    Q_UNUSED(action);
+    Q_UNUSED(row);
+    Q_UNUSED(data);
+
+    if (column > 0){
+        qDebug() << "Error here";
+        return false;
+    }
+qDebug() << "Dropped into row: " << parent.row();
+qDebug() << "Target row: " << row << "Target Column: " << column;
+
+    if (rowCount(parent) <= 0){
+        //return false;
+    }
+
+    if (row < 0){ //row = -1 means item dropped directly on parent
+       //return false;
+}
+    if (parent.parent() != QModelIndex()){
+        return false;
+    }
+    return true;
 }

@@ -91,13 +91,10 @@ private slots:
 
     void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
-    void on_actionOpen_Script_triggered();
-    void on_actionNew_Script_triggered();
     void on_actionQuit_triggered();
     void on_toolButton_clicked();
     void on_actionHow_To_triggered();
     void on_actionAbout_ScriptMax_triggered();
-    void on_clearTableButton_clicked();
     void on_actionSave_GCL_file_triggered();
 
     void on_saveButton_clicked();
@@ -131,6 +128,10 @@ private slots:
 
 
     void on_actionSave_Python_Script_triggered();
+
+    void on_clear_triggered();
+
+    void on_loadData_triggered();
 
 private:
     Highlighter* OGhighlighter;
