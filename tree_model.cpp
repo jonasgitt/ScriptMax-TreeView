@@ -313,8 +313,9 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
             QVector<QVariant> columnData;
 
             for (int column = 0; column < columnStrings.count(); ++column){
-                if (columnStrings[0] == "SAMPLEDATA")
-                    return;
+                if (columnStrings[0] == "SAMPLEDATA"){
+                     return;
+                }
                 columnData << columnStrings[column];
             }
             if (position > indentations.last()) {

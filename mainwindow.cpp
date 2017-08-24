@@ -147,30 +147,28 @@ void MainWindow::on_actionOpen_Script_triggered()
     QString fName = QFileDialog::getOpenFileName(this,tr("Open Script"), \
                                                  defaultLocation, tr("Script files (*.txt)"));
     QFile file(fName);
-    qDebug() << "file open" << file.open(QIODevice::ReadOnly);
-
-    QTextStream in(&file);
-
-    int line_count=0;
-    int samplesStart;
-    QString lines[150];
-    while(!in.atEnd())
-    {
-        lines[line_count]=in.readLine(); qDebug() << "line:" << lines[line_count];
-        if (lines[line_count].contains("#SAMPLES"))
-                samplesStart = line_count + 1;
-        line_count++;
-    }
-   qDebug() << "Table Start: " << samplesStart << " Table End: " << line_count;
-
+    file.open(QIODevice::ReadOnly);
     QString data = file.readAll();
-    initTree(data);
     file.close();
+
+    initTree(data);
+    initSampleTable(data);
+}
+
+void MainWindow::initSampleTable(QString data){
+
+    int samplesStart;
+    QStringList lines = data.split(QString("\n"));
+    for (int i = 0; i < lines.length(); i++)
+    {
+        if (lines[i].contains("#SAMPLES"))
+                samplesStart = i + 1;
+    }
 
     QStringList sampleParameters;
 
-    for (int line = 0; line < line_count; line++){
-        sampleParameters = lines[line + samplesStart].split(',');
+    for (int line = samplesStart; line < lines.length(); line++){
+        sampleParameters = lines[line].split(',');
         if (sampleParameters.length() > 8){
             mySampleTable->currentSample = line-samplesStart;
             NRSample newSample;
@@ -189,7 +187,6 @@ void MainWindow::on_actionOpen_Script_triggered()
         }
         line++;
     }
-
 
 }
 
@@ -328,6 +325,18 @@ void MainWindow::on_actionSave_GCL_file_triggered()
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
+void MainWindow::on_actionSave_Python_Script_triggered()
+{
+    if (ui->PySaveCheckBox->isChecked())
+        save(PYTHON);
+    else{
+        ui->PySaveCheckBox->setChecked(true);
+        ui->tabWidget->setCurrentIndex(2);
+        on_checkBox_clicked();
+        QMessageBox::information(this, "Save Python file", "Please choose a file name and click 'save'.");
+    }
+}
+
 
 void MainWindow::on_saveButton_clicked()
 {
@@ -587,14 +596,16 @@ void MainWindow::initTree(QString data){
     headers << tr("Action") << tr("Summary of Command") << tr("Input Valid") << tr("Further Information");
 
     TreeModel *model;
-    if (data == "")
+    if (data == ""){
         model = new TreeModel(headers);
+    }
     else
         model = new TreeModel(headers , data);
 
     ui->TreeView->setModel(model);
     ui->TreeView->setAnimated(true);
 
+    //======DRAGDROP STUFF -- NOT WORKING===================================//
     ui->TreeView->setDragDropMode(QAbstractItemView::InternalMove);
     ui->TreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     ui->TreeView->setDragEnabled(true);
@@ -603,7 +614,10 @@ void MainWindow::initTree(QString data){
     ui->TreeView->setDropIndicatorShown(true);//doesnt do anything*/
     ui->TreeView->setDefaultDropAction(Qt::MoveAction);
 
-   insertChild("Choose a Command...");
+   //======================================================================//
+
+    if (data == "")
+       insertChild("Choose a Command...");
 
     ui->TreeView->setItemDelegateForColumn(0, new ComboBoxDelegate(ui->TreeView));
 
@@ -1146,13 +1160,4 @@ void MainWindow::on_actionCollapse_triggered()
 
 
 
-void MainWindow::on_actionSave_Tree_triggered()
-{
-    //SAVE TREE IN .TXT FILE
-}
 
-void MainWindow::on_actionOpen_Tree_triggered()
-{
-
-
-}

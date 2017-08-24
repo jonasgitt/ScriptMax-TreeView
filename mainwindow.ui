@@ -651,6 +651,7 @@
     <addaction name="actionSave_Script_As"/>
     <addaction name="separator"/>
     <addaction name="actionSave_GCL_file"/>
+    <addaction name="actionSave_Python_Script"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -695,7 +696,7 @@
   </widget>
   <action name="actionOpen_Script">
    <property name="text">
-    <string>Open Table</string>
+    <string>Load Data from File</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -703,7 +704,7 @@
   </action>
   <action name="actionSave_Script">
    <property name="text">
-    <string>Save Table</string>
+    <string>Save Data</string>
    </property>
    <property name="iconText">
     <string>Save Table</string>
@@ -717,7 +718,7 @@
   </action>
   <action name="actionSave_Script_As">
    <property name="text">
-    <string>Save Table As</string>
+    <string>Save Data to File...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
@@ -769,7 +770,7 @@
   </action>
   <action name="actionSave_GCL_file">
    <property name="text">
-    <string>Save GCL file</string>
+    <string>Save OpenGenie Script</string>
    </property>
   </action>
   <action name="actionNew_Script">
@@ -829,6 +830,11 @@
    </property>
    <property name="shortcut">
     <string>Alt+X</string>
+   </property>
+  </action>
+  <action name="actionSave_Python_Script">
+   <property name="text">
+    <string>Save Python Script</string>
    </property>
   </action>
  </widget>

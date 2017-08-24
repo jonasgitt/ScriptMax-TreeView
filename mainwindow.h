@@ -99,8 +99,6 @@ private slots:
     void on_actionAbout_ScriptMax_triggered();
     void on_clearTableButton_clicked();
     void on_actionSave_GCL_file_triggered();
-    void on_actionOpen_Tree_triggered();
-    void on_actionSave_Tree_triggered();
 
     void on_saveButton_clicked();
     void on_checkBox_clicked();
@@ -135,6 +133,8 @@ private slots:
     void on_sampleTableButton_clicked();
 
 
+    void on_actionSave_Python_Script_triggered();
+
 private:
     Highlighter* OGhighlighter;
     KickPythonSyntaxHighlighter* pyhighlighter;
@@ -163,6 +163,8 @@ private:
 
     QString saveTreeString();
     QString saveSamplesString();
+
+    void initSampleTable(QString data);
 
 };
 
