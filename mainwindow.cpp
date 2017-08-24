@@ -67,8 +67,9 @@ void MainWindow::updateRunTime(double uAmps){
 
 void MainWindow::on_sampleTableButton_clicked()
 {
-    mySampleTable->displaySamples();
+     mySampleTable->displaySamples();
     mySampleTable->show();
+
 
 }
 

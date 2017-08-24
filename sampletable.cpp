@@ -16,6 +16,12 @@ SampleTable::SampleTable(QMainWindow *parent) :
 {
     ui->setupUi(this);
 
+    QStringList headers;
+    headers << "Title" << "Translation" << "Height" << "Phi-Offset" << "Psi" << "Footprint" << "Resolution" << "Slit 3" << "Slit 4 (detector)" << "Switch Position" << "Coarse_NoMirror";
+    ui->tableWidget->setHorizontalHeaderLabels(headers);
+    for (int i = 0; i < headers.size(); i++){
+        ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(headers[i]));
+    }
     //is this really needed??
     for (int row = 0; row< ui->tableWidget->rowCount(); row++){
         for (int col = 1; col< ui->tableWidget->columnCount(); col++){
@@ -26,12 +32,7 @@ SampleTable::SampleTable(QMainWindow *parent) :
         }
     }
 
-    QStringList headers;
-    headers << "Title" << "Translation" << "Height" << "Phi-Offset" << "Psi" << "Footprint" << "Resolution" << "Slit 3" << "Slit 4 (detector)" << "Switch Position" << "Coarse_NoMirror";
 
-    for (int i = 0; i < headers.size(); i++){
-        ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(headers[i]));
-    }
 }
 
 
