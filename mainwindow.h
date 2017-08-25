@@ -89,7 +89,6 @@ public slots:
 
 private slots:
 
-    void on_actionSave_Script_triggered();
     void on_actionSave_Script_As_triggered();
     void on_actionQuit_triggered();
     void on_toolButton_clicked();

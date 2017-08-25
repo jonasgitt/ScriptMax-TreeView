@@ -10,6 +10,7 @@
 #include <mainwindow.h>
 #include <QCloseEvent>
 
+//Configures Sample Table
 SampleTable::SampleTable(QMainWindow *parent) :
     QMainWindow(parent),
     ui(new Ui::SampleTable)
@@ -22,20 +23,17 @@ SampleTable::SampleTable(QMainWindow *parent) :
     for (int i = 0; i < headers.size(); i++){
         ui->tableWidget->setHorizontalHeaderItem(i, new QTableWidgetItem(headers[i]));
     }
-    //is this really needed??
+
     for (int row = 0; row< ui->tableWidget->rowCount(); row++){
         for (int col = 1; col< ui->tableWidget->columnCount(); col++){
              QTableWidgetItem *newItem = new QTableWidgetItem;
             newItem->setText(" ");
             ui->tableWidget->setItem(row,col,newItem);
-
         }
     }
-
-
 }
 
-
+//Fills table with the samples that have already been defined by the user previously
 void SampleTable::displaySamples(){
 
     for (int row = sampleList.length(); row<   ui->tableWidget->rowCount(); row++){
@@ -103,6 +101,7 @@ void SampleTable::displaySamples(){
     connect(ui->tableWidget,SIGNAL(currentCellChanged(int,int,int,int)),SLOT(updateSamplesSlot()));
 }
 
+//Updates the sampleList if
 void SampleTable::updateSamplesSlot(){
 
 

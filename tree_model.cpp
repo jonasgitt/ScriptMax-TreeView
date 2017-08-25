@@ -75,7 +75,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex &index) const
     if (!index.isValid())
         return 0;
 
-    //if we in first col of second child --> not editable
+    //if we're in first col of second child --> not editable
     if ((index.parent() != QModelIndex() && index.column() == 0) || index.column() == 2)
         return Qt::ItemIsEnabled;
 

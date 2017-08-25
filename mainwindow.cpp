@@ -64,7 +64,7 @@ void MainWindow::updateRunTime(double uAmps){
     return;
 }
 
-
+//Opens the Sample Table and fills it with samples (if any have been defined yet)
 void MainWindow::on_sampleTableButton_clicked()
 {
      mySampleTable->displaySamples();
@@ -75,6 +75,7 @@ void MainWindow::on_sampleTableButton_clicked()
 
 //------------------------------------------------------------------------------------------------------//
 //------------------------LOADING DATA FROM FILE--------------------------------------------------------//
+//Loads Data from File into Sample Table and Tree View
 void MainWindow::on_loadData_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
@@ -89,6 +90,7 @@ void MainWindow::on_loadData_triggered()
     initSampleTable(data);
 }
 
+//Parses Sample Data from the .txt file and appends SampleList accordingly.
 void MainWindow::initSampleTable(QString data){
 
     mySampleTable->sampleList.clear();
@@ -127,7 +129,7 @@ void MainWindow::initSampleTable(QString data){
 //------------------------------------------------------------------------------------------------------//
 //------------------------------------------------------------------------------------------------------//
 
-
+//----------------------------Various Actions From Menu-------------------------------------------------//
 
 
 //Quits Program
@@ -154,9 +156,6 @@ void MainWindow::on_actionAbout_ScriptMax_triggered()
 }
 
 
-
-
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (areyousure()) {
@@ -171,8 +170,7 @@ bool MainWindow::areyousure()
     if (ui->checkBox->isChecked() || mySampleTable->sampleList.isEmpty())
         return true;
     const QMessageBox::StandardButton ret
-        = QMessageBox::warning(this, tr("Application"),
-                               tr("The document has been modified.\n"
+        = QMessageBox::warning(this, tr("Application"), tr("The document has been modified.\n"
                                   "Are you sure you want to leave without saving?"),
                                QMessageBox::Yes | QMessageBox::Cancel);
     switch (ret) {
@@ -188,9 +186,10 @@ bool MainWindow::areyousure()
 
 //-------------------------------------------------------------------------------------------------------//
 //-------------------------------------------------------------------------------------------------------//
-//--------------------------------SAVE STUFF-------------------------------------------------------------//
+//--------------------------------"SAVE" FUNCTIONS---------------------------------------------------------//
 //-------------------------------------------------------------------------------------------------------//
 
+//In Menu Bar: File->"Save OpenGenie Script". Prompts user to save manually in OpenGenie Tab.
 void MainWindow::on_actionSave_GCL_file_triggered()
 {
     if (ui->checkBox->isChecked())
@@ -202,6 +201,8 @@ void MainWindow::on_actionSave_GCL_file_triggered()
         QMessageBox::information(this, "Save GCL file", "Please choose a file name and click 'save'.");
     }
 }
+
+//In Menu Bar: File->"Save OpenGenie Script". Prompts user to save manually in Python Tab.
 void MainWindow::on_actionSave_Python_Script_triggered()
 {
     if (ui->PySaveCheckBox->isChecked())
@@ -209,7 +210,7 @@ void MainWindow::on_actionSave_Python_Script_triggered()
     else{
         ui->PySaveCheckBox->setChecked(true);
         ui->tabWidget->setCurrentIndex(2);
-        on_checkBox_clicked();
+        on_PySaveCheckBox_clicked();
         QMessageBox::information(this, "Save Python file", "Please choose a file name and click 'save'.");
     }
 }
@@ -224,7 +225,7 @@ void MainWindow::on_PySaveButton_clicked()
     save(PYTHON);
 }
 
-
+//Writes the Data to file with name, location specified in LineEdit.
 void MainWindow::save(bool OGorPy){
 
     QString fileName;
@@ -247,6 +248,7 @@ void MainWindow::save(bool OGorPy){
 
 }
 
+//Fills OpenGenie LineEdit with default filepath and name and enables editing of this.
 void MainWindow::on_checkBox_clicked()
 {
     QDateTime local(QDateTime::currentDateTime());
@@ -265,6 +267,7 @@ void MainWindow::on_checkBox_clicked()
     }
 }
 
+//Fills Python LineEdit with default filepath and name and enables editing of this.
 void MainWindow::on_PySaveCheckBox_clicked()
 {
     QDateTime local(QDateTime::currentDateTime());
@@ -293,6 +296,8 @@ void MainWindow::on_PyToolButton_clicked()
     SaveToolButtons(PYTHON);
 }
 
+//Opens Dialog to select file name and location to fill LineEdits with.
+//Retrieves last file location from Settings if there is one. Otherwise uses default.
 void MainWindow::SaveToolButtons(bool OGorPy){
 
     QDateTime local(QDateTime::currentDateTime());
@@ -316,7 +321,7 @@ void MainWindow::SaveToolButtons(bool OGorPy){
     saveSettings("lastfileloc", saveloc, "savegroup");
 }
 
-
+//Saves settings in groups using key-value pairs.
 void saveSettings(const QString &key, const QVariant &value, const QString &group)
 {
     QSettings settings;
@@ -325,6 +330,7 @@ void saveSettings(const QString &key, const QVariant &value, const QString &grou
     settings.endGroup();
 }
 
+//Loads file locations.
 QVariant loadSettings()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
@@ -334,16 +340,11 @@ QVariant loadSettings()
     return testloc;
 }
 
-//makes document with only the most important infos. Need to delete or more clearly distinguish from save().
-void MainWindow::on_actionSave_Script_triggered()
-{
-
-}
-
+//In MenuBar: File->Save Data to File... Opens
 void MainWindow::on_actionSave_Script_As_triggered()
 {
     QString defaultLocation = QStandardPaths::locate(QStandardPaths::DesktopLocation, QString(), QStandardPaths::LocateDirectory);
-    fileName = QFileDialog::getSaveFileName(this,tr("Save Script As..."), \
+    fileName = QFileDialog::getSaveFileName(this,tr("Save Data to File..."), \
                                            defaultLocation, tr("Script files (*.txt)"));
 
     QFile file(fileName);
@@ -357,6 +358,7 @@ void MainWindow::on_actionSave_Script_As_triggered()
     file.close();
 }
 
+//Creates String to save Tree Data in .txt file
 QString MainWindow::saveTreeString(){
 
     QAbstractItemModel *model = ui->TreeView->model();
@@ -384,6 +386,7 @@ QString MainWindow::saveTreeString(){
 
 }
 
+//Creates String to Save Sample Data
 QString MainWindow::saveSamplesString(){
 
     QString str;
@@ -407,12 +410,14 @@ QString MainWindow::saveSamplesString(){
 }
 //------------------------------------------END OF SAVE STUFF---------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
+
 //--------------------------------------------------------------------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
 //----------------------------------------------TREEVIEW------------------------------------------------------------------//
 //--------------------------------------------------------------------------------------------------------------------------//
 
-
+//By default, creates empty treeview and configures settings for it.
+//If called in LoadData it receives the string and fills table tree_model function SetupModelData();
 void MainWindow::initTree(QString data){
 
     QStringList headers;
@@ -457,12 +462,14 @@ void MainWindow::initTree(QString data){
     ui->TreeView->setColumnWidth(2, 65);
 }
 
+//Removes all Children of a given Parent
 void MainWindow::clearChildren(const QModelIndex &parent){
     while (ui->TreeView->model()->hasChildren(parent)){
         ui->TreeView->model()->removeRow(0, parent);
     }
 }
 
+//Called whenever any data is changed in the model. Used to set appropriate children if a runoption is selected in Combobox
 void MainWindow::updateComboSlot(QModelIndex topLeft){
 
     if (topLeft.column() != 0){
@@ -479,6 +486,8 @@ void MainWindow::updateComboSlot(QModelIndex topLeft){
    }
 
 }
+
+//Pop-Up Warning that Displays "Message"
 bool MainWindow::WarningMessage(QString message){
     QMessageBox::warning(this, tr("Max Script Maker"),
                                    message,
@@ -486,6 +495,7 @@ bool MainWindow::WarningMessage(QString message){
     return true;
 }
 
+//Sets parameters that correspond to each of the runOptions
 QStringList MainWindow::parameterList(QVariant runOption){
 
     QStringList parameters;
@@ -522,6 +532,7 @@ QStringList MainWindow::parameterList(QVariant runOption){
     return parameters;
 }
 
+//Inserts the Parameters for the ComboBox Parent
 void MainWindow::InsertParameters(QStringList parameters){
 
     //take the first parameter and add it as a child
@@ -535,6 +546,7 @@ void MainWindow::InsertParameters(QStringList parameters){
     }
 }
 
+//Inserts a child under the Parent that is currently selected
 void MainWindow::insertChild(QString ChildTitle)
 {
     QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
@@ -559,6 +571,7 @@ void MainWindow::insertChild(QString ChildTitle)
 
 }
 
+//Sets the samples ComboBox
 void MainWindow::setSampleComboBox(QModelIndex comboIndex){
 
     QStringList samples;
@@ -571,7 +584,8 @@ void MainWindow::setSampleComboBox(QModelIndex comboIndex){
     ui->TreeView->setIndexWidget(comboIndex, SampleBox);
 }
 
-void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
+//Updates Samples ComboBox in response to SampleTable being closed i.e. new samples been defined.
+void MainWindow::updateSampleBoxes(){
 
     QAbstractItemModel *model = ui->TreeView->model();
   for (int row = 0; row < model->rowCount(); row++){
@@ -587,6 +601,7 @@ void MainWindow::updateSampleBoxes(){ //SLOT responding to table closure
     }
 }
 
+//Inserts a new parent row
 void MainWindow::on_newCommand_clicked()
 {
    QAbstractItemModel *model = ui->TreeView->model();
@@ -612,7 +627,7 @@ void MainWindow::on_newCommand_clicked()
    model->setData(child, QVariant("Choose a Command..."));
 }
 
-//PROBLEM: this finds the index of what ever is selected (which depends on the user!!) ... is this even a problem?
+//Inserts a new parent row underneath currently selected row
 void MainWindow::insertRow(QString Action)
 {
     QModelIndex index = ui->TreeView->selectionModel()->currentIndex();
@@ -627,7 +642,7 @@ void MainWindow::insertRow(QString Action)
     }
 }
 
-
+//Removes a column, never used.
 bool MainWindow::removeColumn()
 {
     QAbstractItemModel *model = ui->TreeView->model();
@@ -640,7 +655,7 @@ bool MainWindow::removeColumn()
 }
 
 
-
+//Inserts a column, never used.
 bool MainWindow::insertColumn()
 {
     QAbstractItemModel *model = ui->TreeView->model();
@@ -660,7 +675,8 @@ void MainWindow::removeRow()
     on_removeCommands_clicked();
 }
 
-//need to update runtime for run and runtrans
+//The Heart of the program. Writes Backbones, sets cursors. Saves scripts
+//Parses the Tree, storing parameter to a QVector, passing this to the printing functions
 void MainWindow::parseTree(){
 
     ui->plainTextEdit->moveCursor(QTextCursor::Start);
@@ -697,6 +713,7 @@ void MainWindow::parseTree(){
         save(PYTHON);
 }
 
+//Returns a QVector containing parameter data for a given Parent Row
 QVector<QVariant> MainWindow::getChildData(int parentRow){
 
     QAbstractItemModel *model = ui->TreeView->model();
@@ -715,6 +732,7 @@ QVector<QVariant> MainWindow::getChildData(int parentRow){
     return data;
 }
 
+//Is used to read the name of the sample that has been selected in samplecombobox.
 QString MainWindow::readCombobox(QModelIndex index){
     QComboBox* box = qobject_cast<QComboBox*>(ui->TreeView->indexWidget(index));
     return box->currentText();
@@ -725,6 +743,7 @@ QString MainWindow::readCombobox(QModelIndex index){
 //------------------------------------------------------------------------------------------------------//
 //-----------------------------------------PRINTING FUNCTIONS--------------------------------------------//
 //------------------------------------------------------------------------------------------------------//
+//Writes OpenGenie Backbone which is defined in resource file OGBackbone.txt
 void MainWindow::writeBackbone(){
 
     ui->plainTextEdit->clear();
@@ -749,6 +768,7 @@ void MainWindow::writeBackbone(){
     }
 }
 
+//Writes Python Backbone which is defined in resource file pyBackbone.txt
 void MainWindow::pyWriteBackbone(){
 
     ui->PyScriptBox->clear();
@@ -771,7 +791,7 @@ void MainWindow::pyWriteBackbone(){
     ui->PyScriptBox->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
 }
 
-
+//Writes Sample Data to the OpenGenie script
 void MainWindow::samplestoPlainTextEdit(){
     ui->plainTextEdit->find("#do not need to be changed during experiment."); //positions the cursor to insert instructions
     ui->plainTextEdit->moveCursor(QTextCursor::Down, QTextCursor::MoveAnchor);
@@ -779,7 +799,7 @@ void MainWindow::samplestoPlainTextEdit(){
     QList<NRSample> samples = mySampleTable->sampleList;
     ui->plainTextEdit->insertPlainText(writeSamples(samples));
 }
-
+//Writes sample data to the Python Script
 void MainWindow::samplestoPyTextEdit(){
 
     bool found = ui->PyScriptBox->find("def experimentsettings():");
@@ -788,7 +808,7 @@ void MainWindow::samplestoPyTextEdit(){
     ui->PyScriptBox->insertPlainText(PyWriteSamples(samples));
 }
 
-
+//Calls appropriate functions for each command, to print command to scripts
 void MainWindow::printCommands(QString command, QVector<QVariant> params, int row){
 
     if (params.isEmpty())
@@ -832,8 +852,15 @@ void MainWindow::printCommands(QString command, QVector<QVariant> params, int ro
     }
 }
 
+//----------------------------------------------------------------
+//The following functions print an appropriate string to the scripts.
+//The string is created in ScriptLines.cpp functions
+//A Summary of the command is set to the treeview (if user input was valid).
+//Error Checking happens in ScriptLines.cpp functions to check user input is appropriate
+//Red or Green flags are set in TreeView accordingly.
+//----------------------------------------------------------------
 void MainWindow::printFreeCommand(int row, QVector<QVariant> &params){
-    ui->PyScriptBox->insertPlainText(params[0].toString());
+    ui->PyScriptBox->insertPlainText("    " + params[0].toString());
     ui->plainTextEdit->insertPlainText(params[1].toString());
     freeCommandSummary(row, params);
     setColor(Qt::green, row);
@@ -1024,13 +1051,14 @@ void MainWindow::printRunSM(runstruct &runvars, int row, QVector<QVariant> &para
 //------------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------------//
 //------------------------------------------------------------------------------------------------------//
+//Can set the color of any cell on the TreeView
 void MainWindow::setColor(Qt::GlobalColor color, int rowNumber){
 
     QModelIndex index = ui->TreeView->model()->index(rowNumber, 2, QModelIndex());
     bool success = ui->TreeView->model()->setData(index, QVariant(QBrush (QColor(color))), Qt::BackgroundRole);
 }
 
-
+//Given the samplename, returns the SampleNumber
 QString MainWindow::findSampNum(QString sampName){
     for (int i = 0; i < mySampleTable->sampleList.size(); i++){
         if (sampName == mySampleTable->sampleList[i].title){
@@ -1040,13 +1068,12 @@ QString MainWindow::findSampNum(QString sampName){
     return "error";
 }
 
-
-
 void MainWindow::on_parseCommands_clicked()
 {
     parseTree();
 }
 
+//Removes a Parent Row in the TreeView
 void MainWindow::on_removeCommands_clicked()
 {
     QAbstractItemModel *model = ui->TreeView->model();
@@ -1061,7 +1088,7 @@ void MainWindow::on_removeCommands_clicked()
 }
 
 
-
+//Expands nodes in TreeView
 void MainWindow::on_actionExpand_triggered()
 {
     ui->TreeView->expandAll();
@@ -1072,8 +1099,7 @@ void MainWindow::on_actionCollapse_triggered()
     ui->TreeView->collapseAll();
 }
 
-
-
+//Collapses Nodes in TreeView
 void MainWindow::on_clear_triggered()
 {
     bool sure;

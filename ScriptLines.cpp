@@ -11,6 +11,14 @@
 #include <QApplication>
 #include <QValidator>
 
+//There are two Groups of functions here: "Write" functions, and "Parse Functionss"
+//"Parse" functions take the QVector containing parameter data and map them to the runstruct struct.
+//This runstruct is then used to create strings with appropriate syntax in "write" functions.
+//Parse Functions also Check if user input is valid and thus return bools.
+
+//-------------------------------"WRITE" FUNCTIONS------------------------------------------------------------//
+//----------------------------------------------------------------------------------------------------------//
+
 #include <QDebug>
 QString writeSamples(QList<NRSample> samples){
 
@@ -242,6 +250,12 @@ QString writeTransm(runstruct &runvars, bool Python){
     scriptLine += "," + QString::number(runvars.uAmpsT) + ")"  + "\n";
     return scriptLine;
 }
+
+//-------------------------------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------"PARSE" FUNCTIONS--------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------------------//
+
 
 
 //Only parses the run into the runstruct if:
